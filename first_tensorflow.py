@@ -5,9 +5,10 @@ import tensorflow as tf
 def main():
     w1 = tf.Variable(tf.random_normal((2,3), stddev=1, seed=1))  # 2*3 矩阵
     w2 = tf.Variable(tf.random_normal((3,1), stddev=1, seed=1))  # 3*1 矩阵
-    x = tf.constant([[0.7, 0.9], #模拟输入向量，一行一个样本
+    x = tf.constant([[0.7, 0.9], #模拟输入向量，一行一个样本. 4*2
                      [0.1, 0.2],
-                     [0.3, 0.5]])
+                     [0.3, 0.5],
+                     [0.2, 0.8]])
     a = tf.matmul(x, w1)
     y = tf.matmul(a, w2)
 
