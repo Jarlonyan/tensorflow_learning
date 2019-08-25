@@ -9,7 +9,7 @@ def main():
                      [0.1, 0.2],
                      [0.3, 0.5],
                      [0.2, 0.8]])
-    a = tf.matmul(x, w1)
+    a = x*w1 #tf.matmul(x, w1)
     y = tf.matmul(a, w2)
 
     with tf.Session() as sess:
