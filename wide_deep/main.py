@@ -10,6 +10,18 @@ _CSV_COLUMNS = [                                #定义CVS列名
     'capital_gain', 'capital_loss', 'hours_per_week', 'native_area',
     'income_bracket'
 ]
+
+class ArgParser(argparse.ArgumentParser):
+    def __init__(self):
+        super(ArgParser, self).__init__(parents=[parsers.BaseParser()])
+        self.add_argument()
+        self.set_defaults()
+
+#    def train(
+
+#def train(argv):
+#    parser = A
+
  
 
 def main():
