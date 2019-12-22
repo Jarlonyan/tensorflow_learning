@@ -79,7 +79,7 @@ def build_model_columns():
 def build_estimator(model_dir, model_type):
     #按照指定的模型，生成估算器对象
     wide_columns, deep_columns = build_model_columns()
-    hidden_units = [100, 75, 50, 25]
+    hidden_units = [512, 256, 128]
     run_config = tf.estimator.RunConfig().replace(
         session_config=tf.ConfigProto(device_count={'GPU':0}),
         save_checkpoints_steps=1000
@@ -151,12 +151,10 @@ class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
             data_dir='income_data',
             model_dir='income_model',
             export_dir='income_model_exp',
-            train_epochs=1,
+            train_epochs=2,
             batch_size=40,
             learning_rate=0.001,
         )
-
-
 
 def train_main(argv):
     parser = WideDeepArgParser()
@@ -182,7 +180,7 @@ def train_main(argv):
                          'loss': loss_prefix+'head/weighted_loss/Sum'}
     )
 
-    for n in range(flags.train_epochs):
+    for n in range(flags.train_epochs): #开始训练
         model.train(input_fn=train_input_fn, hooks=[train_hook])
         results = model.evaluate(input_fn=eval_input_fn)
 
