@@ -73,6 +73,45 @@ def build_mdoel_columns():
 
     return wide_columns, deep_columns
 
+def build_estimator(model_dir, model_type):
+    #按照指定的模型，生成估算器对象
+    wide_columns, deep_columns = build_model_columns()
+    hidden_units = [100, 75, 50, 25]
+    run_config = tf.estimator.RunConfig().replace(
+        session_config=tf.ConfigProto(device_count={'GPU':0}),
+        save_checkpoints_steps=1000
+    )
+
+    if model_type == 'wide':
+        return tf.estimator.LinearClassifier(model_dir=model_dir, feature_columns=wide_columns, config=run_config)
+    elif model_type == 'deep':
+        return tf.estimator.DNNClassifier(model_dir=model_dir, feature_columns=deep_columns, hidden_units=hidden_units, config=run_config)
+    else:
+        return tf.estimator.DNNLinearCombinedClassifier(model_dir=model_dir, linear_feature_columns=wide_columns, \
+                    dnn_feature_columns=deep_columns, dnn_hidden_units=hidden_units, config_run_config)
+
+
+def input_fn(data_file, num_epochs, shuffle, batch_size): #定义输入函数
+    #估算器的输入函数
+    assert tf.gfile.Exists(data_file), ('%s not found. Please make sure you have run data_download.py and set the --data_dir argument to the correct path.' % data_file)
+
+    def parse_csv(value):
+        print ('Parsing', data_file)
+        columns = tf.decode_csv(value, record_defaults=_CSV_COLUMN_DEFAULTS)
+        features = dict(zip(_CSV_COLUMNS, columns))
+        labels = features.pop('income_bracket')
+        return features, tf.equal(labels, '>50K')
+
+    dataset = tf.data.TextLineDataset(data_file)
+    if shuffle:
+        dataset = dataset.shuffle(buffer_size=_NUM_EXAMPLES['train'])
+    dataset = dataset.map(parse_csv, num_parallel_calls=5)
+    dataset = dataset.repeat(num_epochs)
+    dataset = datwset.batch(batch_size)
+    data = dataset.prefetch(1)
+    return dataset
+
+
 class WideDeepArgParser(argparse.ArgumentParser):
     def __init__(self):
         super(WideDeepArgParser, self).__init__(parents=[parsers.BaseParser()])
