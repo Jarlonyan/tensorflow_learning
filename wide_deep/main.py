@@ -1,10 +1,12 @@
 #coding=utf-8
 
-import argsparse
+import argparse
 import os
 import shutil
 import sys
 
+import tensorflow as tf
+from utils import parser, hooks_helper, model_helpers
 import seaborn as sns
 import pandas as pd
 #import warning
@@ -25,7 +27,7 @@ _NUM_EXAMPLES = {
 
 LOSS_PREFIX = {"wide": 'linear/', "deep": 'dnn/'} #定义模型的前缀
 
-def build_mdoel_columns():
+def build_model_columns():
     age = tf.feature_column.numeric_column('age')
     education_num = tf.feature_column.numeric_column('education_num')
     capital_gain = tf.feature_column.numeric_column('capital_gain')
@@ -36,7 +38,7 @@ def build_mdoel_columns():
         'education', ['HS-grad', '11th', 'Masters', '9th', 'Some-college', 'Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', 'Prof-school', '5th-6th', \
                       '10th', '1st-4th', 'Preschool', '12th'])
 
-    marital_status = tf.feture_column.categorical_column_with_vocabulary_list(
+    marital_status = tf.feature_column.categorical_column_with_vocabulary_list(
         'marital_status', ['Married-civ-spouse', 'Divorced', 'Married-spouse-absent', 'Never-married', 'Separated', 'Married-AF-spouse', 'Windowed'])
 
     relationship = tf.feature_column.categorical_column_with_vocabulary_list('relationship', ['Husband', 'Not-in-family', 'Wife', 'Own-child', 'Unmarried', 'Other-relative'])
@@ -45,13 +47,13 @@ def build_mdoel_columns():
                 'Local-gov', '?', 'Self-emp-inc', 'Wighout-pay', 'Never-worked'])
 
     #将职业通过hash算法，hash成1000个类别
-    occupation = tf.feature_column.categorical_column_weith_hash_bucket('occupation', hash_bucket_size=1000)
+    occupation = tf.feature_column.categorical_column_with_hash_bucket('occupation', hash_bucket_size=1000)
 
     #将连续值特征转为离散值特征
     age_buckets = tf.feature_column.bucketized_column(age, boundaries=[18,25,30,35,40,45,50,55,60,65])
 
     #定义基础特征列
-    base_columns = [education, marital_status, relationship, workclass, occupation, age_bukets]
+    base_columns = [education, marital_status, relationship, workclass, occupation, age_buckets]
 
     #定义交叉特征列
     crossed_columns = [
@@ -88,7 +90,7 @@ def build_estimator(model_dir, model_type):
         return tf.estimator.DNNClassifier(model_dir=model_dir, feature_columns=deep_columns, hidden_units=hidden_units, config=run_config)
     else:
         return tf.estimator.DNNLinearCombinedClassifier(model_dir=model_dir, linear_feature_columns=wide_columns, \
-                    dnn_feature_columns=deep_columns, dnn_hidden_units=hidden_units, config_run_config)
+                    dnn_feature_columns=deep_columns, dnn_hidden_units=hidden_units, config=run_config)
 
 
 def input_fn(data_file, num_epochs, shuffle, batch_size): #定义输入函数
@@ -128,7 +130,7 @@ def export_model(model, model_type, export_dir):
 
 class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
     def __init__(self):
-        super(WideDeepArgParser, self).__init__(parents=[parsers.BaseParser()])
+        super(WideDeepArgParser, self).__init__(parents=[parser.BaseParser()])
         self.add_argument(
             '--model_type', '-mt', type=str, default='wide_dep',
             choices=['wide', 'deep', 'wide_deep'],
@@ -140,7 +142,7 @@ class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
             data_dir='income_data',
             model_dir='income_model',
             export_dir='income_model_exp',
-            train_epochs=5,
+            train_epochs=1,
             batch_size=40
         )
 
@@ -148,11 +150,11 @@ class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
 
 def train_main(argv):
     parser = WideDeepArgParser()
-    flags = parser.parse_args(args(args=argv[1:])
+    flags = parser.parse_args(args=argv[1:])
     print "flags=", flags
 
     shutil.rmtree(flags.model_dir, ignore_errors=True)
-    model f= build_estimator(flags.model_dir, flags.model_type)
+    model = build_estimator(flags.model_dir, flags.model_type)
 
     train_file = os.path.join(flags.data_dir, 'adult.data.csv')
     test_file = os.path.join(flags.data_dir, 'adult.test.csv')
@@ -202,7 +204,7 @@ def pre_main(argv):
             break
 
 if __name__ == "__main__":
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    #tf.logging.set_verbosity(tf.logging.ERROR)
     train_main(argv=sys.argv)
     #pre_main(argv=sys.argv)
 
