@@ -90,8 +90,16 @@ def build_estimator(model_dir, model_type):
     elif model_type == 'deep':
         return tf.estimator.DNNClassifier(model_dir=model_dir, feature_columns=deep_columns, hidden_units=hidden_units, config=run_config)
     else:
-        return tf.estimator.DNNLinearCombinedClassifier(model_dir=model_dir, linear_feature_columns=wide_columns, \
-                    dnn_feature_columns=deep_columns, dnn_hidden_units=hidden_units, config=run_config)
+        return tf.estimator.DNNLinearCombinedClassifier(
+                    model_dir=model_dir, \
+                    linear_feature_columns=wide_columns, \
+                    dnn_feature_columns=deep_columns, \
+                    dnn_hidden_units=hidden_units, \
+                    dnn_optimizer=tf.train.AdamOptimizer(
+                        learning_rate=0.0001
+                    ),
+                    config=run_config
+        )
 
 
 def input_fn(data_file, num_epochs, shuffle, batch_size): #定义输入函数
@@ -144,7 +152,8 @@ class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
             model_dir='income_model',
             export_dir='income_model_exp',
             train_epochs=1,
-            batch_size=40
+            batch_size=40,
+            learning_rate=0.001,
         )
 
 
@@ -152,9 +161,9 @@ class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
 def train_main(argv):
     parser = WideDeepArgParser()
     flags = parser.parse_args(args=argv[1:])
-    print "flags=", flags
+    print "flags=", flags, '!!!!!!!!!'
 
-    shutil.rmtree(flags.model_dir, ignore_errors=True)
+    shutil.rmtree(flags.model_dir, ignore_errors=True) #如果模型存在，则删除目录
     model = build_estimator(flags.model_dir, flags.model_type)
 
     train_file = os.path.join(flags.data_dir, 'adult.data.csv')
@@ -170,7 +179,8 @@ def train_main(argv):
     train_hook = hooks_helper.get_logging_tensor_hook(
         batch_size = flags.batch_size,
         ternsors_to_log={'average_loss': loss_prefix+'heaad/truediv',
-                         'loss': loss_prefix+'head/weighted_loss/Sum'})
+                         'loss': loss_prefix+'head/weighted_loss/Sum'}
+    )
 
     for n in range(flags.train_epochs):
         model.train(input_fn=train_input_fn, hooks=[train_hook])
@@ -186,7 +196,7 @@ def train_main(argv):
     if flags.export_dir is not None:
         export_model(model, flags.model_type, flags.export_dir)
 
-def pre_main(argv):
+def predict_main(argv):
     parser = WideDeepArgParser()
     flags = parser.parse_args(args=argv[1:])
     print ("解析的参数为：", flags)
@@ -207,7 +217,7 @@ def pre_main(argv):
 if __name__ == "__main__":
     #tf.logging.set_verbosity(tf.logging.ERROR)
     train_main(argv=sys.argv)
-    #pre_main(argv=sys.argv)
+    #predict_main(argv=sys.argv)
 
 
 
