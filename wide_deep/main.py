@@ -111,8 +111,22 @@ def input_fn(data_file, num_epochs, shuffle, batch_size): #定义输入函数
     data = dataset.prefetch(1)
     return dataset
 
+def export_model(model, model_type, export_dir):
+    #导出模型
+    wide_columns, deep_columns = build_model_columns()
+    if model_type == 'wide':
+        columns = wide_columns
+    elif model_type == 'deep':
+        columns = deep_columns
+    else:
+        columns = wide_columns + deep_columns
 
-class WideDeepArgParser(argparse.ArgumentParser):
+    feature_spec = tf.feature_column.make_parse_example_spec(columns)
+    example_input_fn = (tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec))
+    model.export_savedmodel(export_dir, example_input_fn)
+
+
+class WideDeepArgParser(argparse.ArgumentParser): #用于解析参数
     def __init__(self):
         super(WideDeepArgParser, self).__init__(parents=[parsers.BaseParser()])
         self.add_argument(
@@ -159,11 +173,38 @@ def train_main(argv):
         model.train(input_fn=train_input_fn, hooks=[train_hook])
         results = model.evaluate(input_fn=eval_input_fn)
 
+        print ('{0:-~60}'.format('evaluate at epoch %d'%(n+1)))
+
+        for key in sorted(results):
+            print ('%s: %s'%(key, results[key]))
+        if model_helpers.past_stop_threshold(flags.stop_threshold, results['accuracy']):
+            break
+
+    if flags.export_dir is not None:
+        export_model(model, flags.model_type, flags.export_dir)
+
+def pre_main(argv):
+    parser = WideDeepArgParser()
+    flags = parser.parse_args(args=argv[1:])
+    print ("解析的参数为：", flags)
+
+    test_file = os.path.join(flags.data_dir, 'adult.test.csv')
+
+    def eval_input_fn():
+        return input_fn(test_file, 1, False, flags.batch_size)
+
+    mdoel2 = build_estimator(flags.mdoel_dir, flags.model_type)
+
+    predictions = model2.predict(input_fn=eval_input_fn)
+    for i,per in enumerate(predictions):
+        print ("csv中第", i, "条结果为：", per['class_ids'])
+        if i==5:
+            break
 
 if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.ERROR)
     train_main(argv=sys.argv)
-    pre_main(argv=sys.argv)
+    #pre_main(argv=sys.argv)
 
 
 
