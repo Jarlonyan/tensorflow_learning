@@ -10,8 +10,7 @@ import pandas as pd
 #import warning
 
 _CSV_COLUMNS = [                                #定义CVS列名
-    'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status',
-    'occupation', 'relationship', 'race', 'gender', 'capital_gain', 'capital_loss',
+    'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'gender', 'capital_gain', 'capital_loss', \
     'hours_per_week', 'native_area', 'income_bracket'
 ]
 
@@ -34,8 +33,8 @@ def build_mdoel_columns():
     hours_per_week = tf.feature_column.numeric_column('hours_per_week')
 
     education = tf.feature_column.categorical_column_with_vocabulary_list(
-        'education', ['HS-grad', '11th', 'Masters', '9th', 'Some-college', 'Assoc-acdm', 'Assoc-voc', '7th-8th', \
-        'Doctorate', 'Prof-school', '5th-6th', '10th', '1st-4th', 'Preschool', '12th'])
+        'education', ['HS-grad', '11th', 'Masters', '9th', 'Some-college', 'Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', 'Prof-school', '5th-6th', \
+                      '10th', '1st-4th', 'Preschool', '12th'])
 
     marital_status = tf.feture_column.categorical_column_with_vocabulary_list(
         'marital_status', ['Married-civ-spouse', 'Divorced', 'Married-spouse-absent', 'Never-married', 'Separated', 'Married-AF-spouse', 'Windowed'])
@@ -51,6 +50,28 @@ def build_mdoel_columns():
     #将连续值特征转为离散值特征
     age_buckets = tf.feature_column.bucketized_column(age, boundaries=[18,25,30,35,40,45,50,55,60,65])
 
+    #定义基础特征列
+    base_columns = [education, marital_status, relationship, workclass, occupation, age_bukets]
+
+    #定义交叉特征列
+    crossed_columns = [
+        tf.feature_column.crossed_column(['education', 'occupation'], hash_bucket_size=1000),
+        tf.feature_column.crossed_column([age_buckets, 'education', 'occupation'], hash_bucket_size=1000)
+    ]
+
+    #定义wide部分的特征列
+    wide_columns = base_columns + crossed_columns
+
+    #定义deep部分的特征列
+    deep_columns = [age, education_num, capital_gain, capital_loss, hours_per_week, #将workclass列的稀疏矩阵转成one-hot
+        tf.feature_column.indicator_column(workclass),
+        tf.feature_column.indicator_column(education),
+        tf.feature_column.indicator_column(marital_status),
+        tf.feature_column.indicator_column(relationship),
+        tf.feature_column.embedding_column(occupation, dimension=8),   #用embedding将散列后的每个类别进行转换
+    ]
+
+    return wide_columns, deep_columns
 
 class WideDeepArgParser(argparse.ArgumentParser):
     def __init__(self):
@@ -69,6 +90,8 @@ class WideDeepArgParser(argparse.ArgumentParser):
             train_epochs=5,
             batch_size=40
         )
+
+
 
 def train_main(argv):
     parser = WideDeepArgParser()
