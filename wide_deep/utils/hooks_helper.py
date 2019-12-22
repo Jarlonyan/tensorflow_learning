@@ -1,6 +1,7 @@
 #coding=utf-8
 
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 _TENSORS_TO_LOG = dict((x,x) for x in ['learning_rate', 'cross_entropy', 'train_accracy'])
 

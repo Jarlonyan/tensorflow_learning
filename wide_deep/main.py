@@ -5,7 +5,8 @@ import os
 import shutil
 import sys
 
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from utils import parser, hooks_helper, model_helpers
 import seaborn as sns
 import pandas as pd
@@ -109,7 +110,7 @@ def input_fn(data_file, num_epochs, shuffle, batch_size): #定义输入函数
         dataset = dataset.shuffle(buffer_size=_NUM_EXAMPLES['train'])
     dataset = dataset.map(parse_csv, num_parallel_calls=5)
     dataset = dataset.repeat(num_epochs)
-    dataset = datwset.batch(batch_size)
+    dataset = dataset.batch(batch_size)
     data = dataset.prefetch(1)
     return dataset
 
@@ -160,13 +161,13 @@ def train_main(argv):
     test_file = os.path.join(flags.data_dir, 'adult.test.csv')
 
     def train_input_fn():
-        return input_fn(train_file, flags.epochs_between_evals, True, flags.batch_size)
+        return input_fn(train_file, flags.train_epochs, True, flags.batch_size)
 
     def eval_input_fn():
         return input_fn(test_file, 1, False, flags.batch_size)
 
     loss_prefix = LOSS_PREFIX.get(flags.model_type, '')
-    train_hoook = hooks_helper.get_logging_tensor_hook(
+    train_hook = hooks_helper.get_logging_tensor_hook(
         batch_size = flags.batch_size,
         ternsors_to_log={'average_loss': loss_prefix+'heaad/truediv',
                          'loss': loss_prefix+'head/weighted_loss/Sum'})
