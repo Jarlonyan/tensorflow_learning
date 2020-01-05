@@ -1,13 +1,14 @@
 #coding=utf-8
 
 import tensorflow as tf
+import argparse
+import sys
 
-# 5. Train & Evaluate:训练和评估
+import tools
+
 _CSV_COLUMNS = [
-    'age', 'workclass', 'fnlwgt', 'education', 'education_num',
-    'marital_status', 'occupation', 'relationship', 'race', 'gender',
-    'capital_gain', 'capital_loss', 'hours_per_week', 'native_country',
-    'income_bracket'
+    'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship',
+    'race', 'gender', 'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income_bracket'
 ]
 
 _CSV_COLUMN_DEFAULTS = [[0], [''], [0], [''], [0], [''], [''], [''], [''], [''], [0], [0], [0], [''], ['']]
@@ -101,9 +102,8 @@ def build_columns():
     return base_columns, deep_columns, crossed_columns
 
 
-def build_model():
+def build_model(model_dir):
     base_columns, deep_columns, crossed_columns = build_columns()
-    model_dir = './model/wide_deep'
 
     # 4. Combine Wide & Deep：wide基础上组合Deep
     model = tf.estimator.DNNLinearCombinedClassifier(
@@ -114,21 +114,18 @@ def build_model():
     )
     return model
 
-def train_model():
-    # Train + Eval
-    train_epochs = 6
-    epochs_per_eval = 2
-    batch_size = 40
-    train_file = './data/adult.data'
-    test_file  = './data/adult.test'
+def train_model(argv):
+    parser = tools.DNNArgParser()
+    flags = parser.parse_args(args=argv[1:])
+    print ("args=",flags)
 
-    model = build_model()
-    def input_fn(data_file, num_epochs, shuffle, batch_size):
+    # Train + Eval
+    model = build_model(flags.model_dir)
+    def input_fn(data_file, epochs, shuffle, batch_size):
         """为Estimator创建一个input function"""
         def parse_csv(line):
             print("Parsing", data_file)
             # tf.decode_csv会把csv文件转换成很a list of Tensor,一列一个。record_defaults用于指明每一列的缺失值用什么填充
-            #import pdb; pdb.set_trace()
             columns = tf.io.decode_csv(line, record_defaults=_CSV_COLUMN_DEFAULTS)
             features = dict(zip(_CSV_COLUMNS, columns))
             labels = features.pop('income_bracket')
@@ -137,7 +134,7 @@ def train_model():
         dataset = tf.data.TextLineDataset(data_file).map(parse_csv, num_parallel_calls=5)
         if shuffle:
             dataset = dataset.shuffle(buffer_size=_NUM_EXAMPLES['train'] + _NUM_EXAMPLES['validation'])
-        dataset = dataset.repeat(num_epochs)
+        dataset = dataset.repeat(epochs)
         dataset = dataset.batch(batch_size)
         #iterator = dataset.make_one_shot_iterator()
         #batch_features, batch_labels = iterator.get_next()
@@ -145,17 +142,17 @@ def train_model():
         return dataset.prefetch(1)
 
     #start to train model
-    for n in range(train_epochs // epochs_per_eval):
-        model.train(input_fn=lambda: input_fn(train_file, epochs_per_eval, True, batch_size))
-        results = model.evaluate(input_fn=lambda: input_fn(test_file, 1, False, batch_size))
+    for n in range(flags.epochs // flags.epochs_per_eval):
+        model.train(input_fn=lambda: input_fn(flags.train_file, flags.epochs_per_eval, True, flags.batch_size))
+        results = model.evaluate(input_fn=lambda: input_fn(flags.test_file, 1, False, flags.batch_size))
 
         # Display Eval results
-        print("Results at epoch {0}".format((n+1) * epochs_per_eval))
+        print("Results at epoch {0}".format((n+1) * flags.epochs_per_eval))
         print('-'*30)
 
         for key in sorted(results):
             print("{0:20}: {1:.4f}".format(key, results[key]))
 
 if __name__ == '__main__':
-    train_model()
+    train_model(argv=sys.argv)
 
