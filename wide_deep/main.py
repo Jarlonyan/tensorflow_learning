@@ -113,6 +113,26 @@ def build_model(model_dir):
         dnn_hidden_units=[128, 64, 32]
     )
     return model
+    
+def input_fn(data_file, epochs, shuffle, batch_size):
+    """为Estimator创建一个input function"""
+    def parse_csv(line):
+        print("Parsing", data_file)
+        # tf.decode_csv会把csv文件转换成很a list of Tensor,一列一个。record_defaults用于指明每一列的缺失值用什么填充
+        columns = tf.io.decode_csv(line, record_defaults=_CSV_COLUMN_DEFAULTS)
+        features = dict(zip(_CSV_COLUMNS, columns))
+        labels = features.pop('income_bracket')
+        return features, tf.equal(labels, '>50K') # tf.equal(x, y) 返回一个bool类型Tensor， 表示x == y, element-wise
+
+    dataset = tf.data.TextLineDataset(data_file).map(parse_csv, num_parallel_calls=5)
+    if shuffle:
+        dataset = dataset.shuffle(buffer_size=_NUM_EXAMPLES['train'] + _NUM_EXAMPLES['validation'])
+    dataset = dataset.repeat(epochs)
+    dataset = dataset.batch(batch_size)
+    #iterator = dataset.make_one_shot_iterator()
+    #batch_features, batch_labels = iterator.get_next()
+    #return batch_features, batch_labels
+    return dataset.prefetch(1)
 
 def train_model(argv):
     parser = tools.DNNArgParser()
@@ -121,26 +141,6 @@ def train_model(argv):
 
     # Train + Eval
     model = build_model(flags.model_dir)
-    def input_fn(data_file, epochs, shuffle, batch_size):
-        """为Estimator创建一个input function"""
-        def parse_csv(line):
-            print("Parsing", data_file)
-            # tf.decode_csv会把csv文件转换成很a list of Tensor,一列一个。record_defaults用于指明每一列的缺失值用什么填充
-            columns = tf.io.decode_csv(line, record_defaults=_CSV_COLUMN_DEFAULTS)
-            features = dict(zip(_CSV_COLUMNS, columns))
-            labels = features.pop('income_bracket')
-            return features, tf.equal(labels, '>50K') # tf.equal(x, y) 返回一个bool类型Tensor， 表示x == y, element-wise
-
-        dataset = tf.data.TextLineDataset(data_file).map(parse_csv, num_parallel_calls=5)
-        if shuffle:
-            dataset = dataset.shuffle(buffer_size=_NUM_EXAMPLES['train'] + _NUM_EXAMPLES['validation'])
-        dataset = dataset.repeat(epochs)
-        dataset = dataset.batch(batch_size)
-        #iterator = dataset.make_one_shot_iterator()
-        #batch_features, batch_labels = iterator.get_next()
-        #return batch_features, batch_labels
-        return dataset.prefetch(1)
-
     #start to train model
     for n in range(flags.epochs // flags.epochs_per_eval):
         model.train(input_fn=lambda: input_fn(flags.train_file, flags.epochs_per_eval, True, flags.batch_size))
