@@ -76,6 +76,7 @@ def build_columns():
         tf.feature_column.crossed_column(['education', 'occupation'], hash_bucket_size=1000),
         tf.feature_column.crossed_column([age_buckets, 'education', 'occupation'], hash_bucket_size=1000)
     ]
+    wide_columns = base_columns + crossed_columns
 
     # 3. The Deep Model: Neural Network with Embeddings
     """
@@ -99,18 +100,18 @@ def build_columns():
         tf.feature_column.embedding_column(occupation, dimension=8)
     ]
 
-    return base_columns, deep_columns, crossed_columns
+    return  wide_columns, deep_columns
 
 
 def build_model(model_dir):
-    base_columns, deep_columns, crossed_columns = build_columns()
+    wide_columns, deep_columns = build_columns()
 
     # 4. Combine Wide & Deep：wide基础上组合Deep
     model = tf.estimator.DNNLinearCombinedClassifier(
         model_dir = model_dir,
-        linear_feature_columns=base_columns + crossed_columns,
-        dnn_feature_columns=deep_columns,
-        dnn_hidden_units=[128, 64, 32]
+        linear_feature_columns = wide_columns,
+        dnn_feature_columns = deep_columns,
+        dnn_hidden_units = [128, 64, 32]
     )
     return model
     
@@ -152,6 +153,12 @@ def train_model(argv):
 
         for key in sorted(results):
             print("{0:20}: {1:.4f}".format(key, results[key]))
+    #save model
+    wide_columns, deep_columns = build_columns()
+    feature_spec = tf.feature_column.make_parse_example_spec(wide_columns+deep_columns)
+    example_input_fn = (tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec))
+    model.export_saved_model(flags.model_dir, example_input_fn)
+
 
 if __name__ == '__main__':
     train_model(argv=sys.argv)
