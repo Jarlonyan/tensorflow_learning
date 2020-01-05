@@ -140,7 +140,7 @@ def train_model(argv):
     flags = parser.parse_args(args=argv[1:])
     print ("args=",flags)
 
-    # Train + Eval
+    # build model
     model = build_model(flags.model_dir)
     #start to train model
     for n in range(flags.epochs // flags.epochs_per_eval):
@@ -153,6 +153,7 @@ def train_model(argv):
 
         for key in sorted(results):
             print("{0:20}: {1:.4f}".format(key, results[key]))
+
     #save model
     wide_columns, deep_columns = build_columns()
     feature_spec = tf.feature_column.make_parse_example_spec(wide_columns+deep_columns)
