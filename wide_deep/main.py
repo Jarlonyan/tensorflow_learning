@@ -133,7 +133,7 @@ def input_fn(data_file, epochs, shuffle, batch_size):
     #iterator = dataset.make_one_shot_iterator()
     #batch_features, batch_labels = iterator.get_next()
     #return batch_features, batch_labels
-    return dataset.prefetch(1)
+    return dataset.prefetch(buffer_size=6)
 
 def train_model(argv):
     parser = tools.DNNArgParser()
