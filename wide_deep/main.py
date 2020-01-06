@@ -4,7 +4,7 @@ import tensorflow as tf
 import argparse
 import sys
 
-import tools
+from utils import tools
 
 _CSV_COLUMNS = [
     'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship',
