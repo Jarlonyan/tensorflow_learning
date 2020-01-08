@@ -47,3 +47,6 @@ def build_input_features(feature_columns, include_varlen=True, mask_zero=True, p
             else:
                 raise TypeError("Invalid feature column type:", type(feat))
     return features
+
+
+

@@ -29,35 +29,26 @@ def build_columns():
 
     # 离散特征
     education = tf.feature_column.categorical_column_with_vocabulary_list(
-        'education', [
-            'Bachelors', 'HS-grad', '11th', 'Masters', '9th', 'Some-college',
-            'Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', 'Prof-school',
-            '5th-6th', '10th', '1st-4th', 'Preschool', '12th'
-        ]
+        'education',
+        ['Bachelors', 'HS-grad', '11th', 'Masters', '9th', 'Some-college', 'Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', \
+         'Prof-school', '5th-6th', '10th', '1st-4th', 'Preschool', '12th']
     )
 
     marital_status = tf.feature_column.categorical_column_with_vocabulary_list(
-        'marital_status', [
-            'Married-civ-spouse', 'Divorced', 'Married-spouse-absent',
-            'Never-married', 'Separated', 'Married-AF-spouse', 'Widowed'
-        ]
+        'marital_status',
+        ['Married-civ-spouse', 'Divorced', 'Married-spouse-absent', 'Never-married', 'Separated', 'Married-AF-spouse', 'Widowed']
     )
 
     relationship = tf.feature_column.categorical_column_with_vocabulary_list(
-        'relationship', [
-            'Husband', 'Not-in-family', 'Wife', 'Own-child', 'Unmarried',
-            'Other-relative'
-        ]
+        'relationship',
+        ['Husband', 'Not-in-family', 'Wife', 'Own-child', 'Unmarried', 'Other-relative']
     )
 
     workclass = tf.feature_column.categorical_column_with_vocabulary_list(
-        'workclass', [
-            'Self-emp-not-inc', 'Private', 'State-gov', 'Federal-gov',
-            'Local-gov', '?', 'Self-emp-inc', 'Without-pay', 'Never-worked'
-        ]
+        'workclass',
+        ['Self-emp-not-inc', 'Private', 'State-gov', 'Federal-gov', 'Local-gov', '?', 'Self-emp-inc', 'Without-pay', 'Never-worked']
     )
 
-    # 展示一下这个API
     occupation = tf.feature_column.categorical_column_with_hash_bucket('occupation', hash_bucket_size=1000)
 
     # Transformations
