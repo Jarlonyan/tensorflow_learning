@@ -161,7 +161,8 @@ def train(
                 if (iter % test_iter) == 0:
                     print('iter: %d ----> train_loss: %.4f ---- train_accuracy: %.4f ---- tran_aux_loss: %.4f' % \
                                           (iter, loss_sum / test_iter, accuracy_sum / test_iter, aux_loss_sum / test_iter))
-                    print('               test_auc: %.4f ----test_loss: %.4f ---- test_accuracy: %.4f ---- test_aux_loss: %.4f' % eval(sess, test_data, model, best_model_path))
+                    print('   test_auc: %.4f ----test_loss: %.4f ---- test_accuracy: %.4f ---- test_aux_loss: %.4f' % \
+                                           eval(sess, test_data, model, best_model_path))
                     loss_sum = 0.0
                     accuracy_sum = 0.0
                     aux_loss_sum = 0.0
@@ -170,6 +171,24 @@ def train(
                     model.save(sess, model_path+"--"+str(iter))
             lr *= 0.5
 #end-train
+
+def test(
+    train_file = 'data/local_train_splitByUser',
+    test_file = 'data/local_test_splitByUser',
+    uid_voc = 'data/uid_voc.pkl',
+    mid_voc = 'data/mid_voc.pkl',
+    cat_voc = 'data/cat_voc.pkl',
+    batch_size = 16,
+    max_len = 100,
+    model_type = 'DNN',
+    seed = 2
+):
+    model_path = 'dnn_best_model/ckpt_noshuff' + model_type + str(seed)
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    with tf.Session(config=tf.ConfigProto(gpu_options)) as sess:
+        train_data = DataIterator(train_file, uid_voc, mid_voc, cat_voc, batch_size, maxlen)
+        test_data = DataIterator(test_file, uid_voc, mid_voc, cat_voc, batch_size, maxlen)
+        n_uid, n_mid, n_cat = train_data.get_n()
 
 if __name__ == '__main__':
     SEED = 3
