@@ -9,12 +9,20 @@ class SparseFeat(namedtuple('SparseFeat', ['name', 'dimension', 'use_hash', 'dty
     def __new__(cls, name, dimension, use_hash=False, dtype="int32", embedding_name=None, embedding=True):
         if embedding and embedding_name is None:
             embedding_name = name
-        return super(SparseFeat, cls).__new__(cls, name, dimension, use_hash, dtype, embedding_name, embedding)0
+        return super(SparseFeat, cls).__new__(cls, name, dimension, use_hash, dtype, embedding_name, embedding)
 
 class DenseFeat(namedtuple('DenseFeat',['name','dimension','dtype'])):
     __slots__ = ()
     def __new__(cls, name, dimension=1, dtype='float64'):
         return super(DenseFeat, cls).__new__(cls, name, dimension, dtype)
+
+class VarLenSparseFeat(namedtuple('VarLenFeat', ['name', 'dimension', 'maxlen', 'combiner', 'use_hash', 'dtype', 'embedding_name','embedding'])):
+    __slots__ = ()
+    def __new__(cls, name, dimension, maxlen, combiner="mean", use_hash=False, dtype="float32", embedding_name=None, embedding=True):
+        if embedding_name is None:
+            embedding_name = name
+        return super(VarLenSparseFeat, cls).__new__(cls, name, dimension, maxlen, combiner, use_hash, dtype, embedding_name, embedding)
+
 
 class MultihotSparseFeat(namedtuple('MultihotSparseFeat', ['name', 'dimension', 'maxlen', 'combiner', 'use_hash', 'dtype', 'embedding_name', 'embedding'])):
     __slots__ = ()

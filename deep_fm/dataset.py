@@ -5,7 +5,7 @@ import pickle
 import tensorflow as tf
 
 from utils import SparseFeat, DenseFeat, VarLenSparseFeat
-from config import argparser
+from conf import argparser
 
 args = argparser()
 

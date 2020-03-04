@@ -4,6 +4,7 @@ import tensorflow as tf
 import argparse
 import sys
 
+from dataset import get_dataloader
 
 
 if __name__ == '__main__':
