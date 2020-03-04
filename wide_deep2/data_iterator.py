@@ -26,7 +26,6 @@ def fopen(filename, mode='r'):
 
 
 class DataIterator:
-
     def __init__(self, source,
                  uid_voc,
                  mid_voc,
@@ -136,10 +135,8 @@ class DataIterator:
             raise StopIteration
 
         try:
-
             # actual work here
             while True:
-
                 # read from source file and map to word index
                 try:
                     ss = self.source_buffer.pop()

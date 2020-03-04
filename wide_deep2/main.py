@@ -195,6 +195,6 @@ if __name__ == '__main__':
     tf.set_random_seed(SEED)
     numpy.random.seed(SEED)
     random.seed(SEED)
-    train(model_type='DNN', seed=SEED)
-
+    #train(model_type='DNN', seed=SEED)
+    test(seed=SEED)
 
