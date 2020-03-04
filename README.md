@@ -2,6 +2,12 @@
 ```python
 pip install tensorflow==2.0.0-alpha0
 pip install seaborn
+
+sudo pip install tensorflow==1.8  #头条的是这个版本
+
+#但是下面的DIEN代码，版本得换一下
+sudo pip install tensorflow=1.4
+sudo pip install keras=2.2.0
 ```
 
 + `wide_deep`模型
@@ -10,5 +16,11 @@ pip install seaborn
 + `deep_fm`
     https://github.com/yongqyu/DeepFM-tf2
 
+
++ DIN
+    https://github.com/zhougr1993/DeepInterestNetwork
+
++ DIEN
+     https://github.com/mouna99/dien.git
 
 
