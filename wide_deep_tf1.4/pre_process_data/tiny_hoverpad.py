@@ -73,6 +73,23 @@ class OnlineJoiner(luigi.Task):
                 for line,t in sorted_user_bh:
                     items = line.split("\t")
                     asin = items[1]
+                    j = 0
+                    while True:
+                        asin_neg_index = random.randint(0, len(item_list)-1)
+                        asin_neg = item_list[asin_neg_index]
+                        if asin_neg == asin:
+                            continue
+                        items[1] = asin_neg
+                        print >> fout, "0" + "\t" + "\t".join(items) + "\t" + item_map[asin_neg]
+                        j += 1
+                        if j==1:
+                            break
+                    if asin in meta_map:
+                        print>>fout, "1" + "\t" + line + "\t" + meta_map[asin]
+                    else:
+                        print>>fout, "1" + "\t" + line + "\t" + "default_cat"
+                #end-for
+            #end-for
         #end-with
 
 if __name__ == '__main__':
