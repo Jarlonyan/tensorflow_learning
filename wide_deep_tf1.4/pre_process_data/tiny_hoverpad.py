@@ -24,7 +24,7 @@ class ItemInfo(luigi.Task):
 
 class RawReviewData(luigi.ExternalTask):
     def output(self):
-        return luigi.LocalTarget('../../data/tiny_review_Books.json')
+        return luigi.LocalTarget('../../data/tiny_reviews_Books.json')
 
 class ReviewInfo(luigi.Task):
     def requires(self):
