@@ -4,6 +4,12 @@
 import tensorflow as tf
 import argparse
 import sys
+import shutil
+import argparse
+import sys
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 from utils import tools
 
@@ -102,16 +108,125 @@ def cross_variable_create(column_num):
 def cross_op(x0, x, w, b):
     x0 = tf.expand_dims(x0, axis=2)
     x = tf.expand_dims(x, axis=2)
-
     multiple = w.get_shape().as_list()[0]
-    x_broad_vertical = tf.
 
+    x0_broad_horizon = tf.tile(x0, [1, 1, multiple])
+    x_broad_vertical = tf.transpose(tf.tile(x, [1,1,multiple]), [0,2,1])
+    w_broad_horizon = tf.tile(w, [1,multiple])
+    mid_res = tf.multiply(tf.multiply(x0_broad_horizon, x_broad_vertical), w)
+    res = tf.reduce_sum(mid_res, axis=2)
+    res = res + tf.transpose(b)
+    return res
 
+def cross_op2(x0, x, w, b):
+    batch_num = x0.get_shape().as_list()[0]
+    res = []
+    for i in range(batch_num):
+        dd = tf.matply(x0[i,:,:], tf.transpose(x[i,:,:]))
+        dc = tf.matmul(dd, w) + b
+        res[i] = dc
+    return res + x0
 
-def train_model():
-    wide_columns, deep_columns = build_columns()
-    training_inputs = tf.feature_column.input_layer(wide_columns, deep_columns) 
+def build_model(features, labels, mode, params):
+    columns = build_columns()
+    input_layer = tf.feature_column.input_layer(features=features, feature_column=columns)
+    print ('features.shape=', features)
+
+    columns_num = input_layer.get_shape().as_list()[1]
+    print ('column_num, before cross_variable_create:', column_num)
+
+    c_w_1, c_b_1 = cross_variable_create(column_num)
+    c_w_2, c_b_2 = cross_variable_create(column_num)
+    c_layer_1 = cross_op(input_layer, input_layer, c_w_1, c_b_1) + input_layer
+    c_layer_2 = cross_op(input_layer, c_layer_1, c_w_2) + c_layer_1
+    c_layer_5 = c_layer_2
+
+    h_layer_1 = tf.layers.dense(inputs=input_layer, units=50, activation=tf.nn.relu, use_bias=True)
+    bn_layer_1 = tf.layers.batch_normalization(inputs=h_layer_1, axis=-1, \
+                                            momentum=0.99, epsilon=0.001, \
+                                            center=True, scale=True)
+
+    h_layer_2 = tf.layers.dense(inputs=bn_layer_1, units=40, activation=tf.nn.relu, use_bias=True)
+
+    m_layer = tf.concat([h_layer_2, c_layer_5], 1)
+    o_layer = tf.layers.dense(inputs=m_layer, units=1, activation=None, use_bias=True)
+    o_prob = tf.nn.sigmoid(o_layer)
+
+    predictions = tf.cast((o_prob>0.5), tf.float32)
+    labels = tf.cast((labels, tf.float32))
+
+    prediction_dict = {'income_bracket': predictions}
+    loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=o_layer))
+    accuracy = tf.metrics.accuracy(labels, predictions)
+    tf.summary.scalar('accuracy', accuracy[1])
+
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.0004, beta1=0.9, beta2=0.999)
+    train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    elif mode == tf.estimator.ModeKeys.EVAL:
+        return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops={'accuracy':accuracy})
+    elif mode == tf.estimator.ModeKeys.PREDICT:
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+
+def build_estimator(model_dir, model_type):
+    run_config = tf.estimator.RunConfig().replace(
+    session_config=tf.ConfigProto(device_count={'GPU': 0}))
+    if model_type == 'deep_cross':
+        return tf.estimator.Estimator(model_fn = build_model,
+                    model_dir=model_dir,
+                    config=run_config)
+    else: 
+        print ('error')
+
+def input_fn(data_file, num_epochs, shuffle, batch_size):
+    assert tf.gfile.Exists(data_file), ('no file named:'+str(data_file))
+
+    def process_list_column(list_column):
+        sparse_strings = tf.string_split(list_column, delimiter="|")
+        return sparse_strings.values
+    def parse_csv(value):
+        columns = tf.decode_csv(value, record_defaults=_CSV_COLUMN_DEFAULTS)
+        features = dict(zip(_CSV_COLUMNS, columns))
+        features['workclass'] = process_list_column([features['workclass']])
+        labels = tf.equal(features.pop('income_bracket'), '>50K')
+        labels = tf.reshape(labels, [-1])
+        return features, labels
+
+    dataset = tf.contrib.data.TextLineDataset(data_file)
+    if shuffle: 
+        dataset = dataset.shuffle(buffer_size=5000)
+    dataset = dataset.map(parse_csv, num_threads=5)
+    dataset = dataset.repeat(num_epochs)
+    dataset = dataset.batch(batch_size)
+    iterator  = dataset.make_one_shot_iterator()
+    features, labels = iterator.get_next()
+    return features, labels
+
+def main():
+    # Clean up the model directory if present
+    shutil.rmtree(FLAGS.model_dir, ignore_errors=True)
+    model = build_estimator(FLAGS.model_dir, FLAGS.model_type)
+
+    # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
+    for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
+        model.train(input_fn=lambda: input_fn( FLAGS.train_data, FLAGS.epochs_per_eval, \
+                                True, FLAGS.batch_size))
+
+    results = model.evaluate(input_fn=lambda: input_fn(
+        FLAGS.test_data, 1, False, FLAGS.batch_size))
+
+    # Display evaluation metrics
+    print('Results at epoch', (n + 1) * FLAGS.epochs_per_eval)
+    print('-' * 60)
+
+    for key in sorted(results):
+      print('%s: %s' % (key, results[key]))
+
 
 if __name__ == '__main__':
-    train_model()
+    tf.logging.set_verbosity(tf.logging.INFO)
+    FLAGS, unparsed = parser.parse_known_args()
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
 
