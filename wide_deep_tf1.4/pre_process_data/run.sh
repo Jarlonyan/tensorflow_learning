@@ -14,5 +14,6 @@
 #luigi --module=tiny_hoverpad OnlineJoiner --local-scheduler
 #luigi --module=tiny_hoverpad SplitInstances --local-scheduler
 #luigi --module=tiny_hoverpad Aggregator --local-scheduler
-luigi --module=tiny_hoverpad Split --local-scheduler
+#luigi --module=tiny_hoverpad Split --local-scheduler
+luigi --module=tiny_hoverpad GenerateVocabulary --local-scheduler
 

@@ -2,10 +2,15 @@
 import luigi
 import random
 import collections
+import cPickle
 
 class RawMetaData(luigi.ExternalTask):
     def output(self):
         return luigi.LocalTarget('../../data/meta_Books.json')
+
+class RawReviewData(luigi.ExternalTask):
+    def output(self):
+        return luigi.LocalTarget('../../data/tiny_reviews_Books.json')
 
 class ItemInfo(luigi.Task):
     n = luigi.IntParameter(default=10)
@@ -22,10 +27,6 @@ class ItemInfo(luigi.Task):
                 cat = obj['categories'][0][-1]
                 print >> f_out, obj['asin'] + '\t' + cat
         #end-with
-
-class RawReviewData(luigi.ExternalTask):
-    def output(self):
-        return luigi.LocalTarget('../../data/tiny_reviews_Books.json')
 
 class ReviewInfo(luigi.Task):
     def requires(self):
@@ -56,28 +57,28 @@ class OnlineJoiner(luigi.Task):
     def run(self):
         user_map = collections.defaultdict(list)
         item_map = collections.defaultdict(list)
-        item_list = []
+        reviewed_item_list = []
         with self.input()[0].open('r') as fin_item, self.input()[1].open('r') as fin_rev, \
             self.output().open('w') as fout:
             for line in fin_rev:
                 items = line.strip().split("\t")
                 user_map[items[0]].append(("\t".join(items), float(items[-1])))
-                item_list.append(items[1])
+                reviewed_item_list.append(items[1])
 
             for line in fin_item:
                 arr = line.strip().split("\t")
                 item_map[arr[0]] = arr[1]
 
             for key in user_map:
-                sorted_user_bh = sorted(user_map[key], key=lambda x:x[1])
+                sorted_user_bh = sorted(user_map[key], key=lambda x:x[1]) #对用户评论数据，按照时间来排序
                 for line,t in sorted_user_bh:
                     items = line.split("\t")
                     asin = items[1]
                     j = 0
                     while True:
-                        asin_neg_index = random.randint(0, len(item_list)-1)
-                        asin_neg = item_list[asin_neg_index]
-                        if asin_neg == asin:
+                        asin_neg_index = random.randint(0, len(reviewed_item_list)-1)
+                        asin_neg = reviewed_item_list[asin_neg_index]
+                        if asin_neg == asin: #要找跟asin不一样的
                             continue
                         items[1] = asin_neg
                         print >> fout, "0" + "\t" + "\t".join(items) + "\t" + item_map[asin_neg]
@@ -201,6 +202,78 @@ class Split(luigi.Task):
             #end-while
         #end-with
 
+class GenerateVocabulary(luigi.Task):
+    def requires(self):
+        return Split()
+
+    def output(self):
+        return [luigi.LocalTarget('uid_voc.pkl'), luigi.LocalTarget('mid_voc.pkl'), luigi.LocalTarget('cat_voc.pkl')]
+
+    def run(self):
+        with self.input()[0].open('r') as fin, self.output()[0].open('w') as fout1, \
+            self.output()[1].open('w') as fout2, self.output()[2].open('w') as fout3:
+            uid_dict = {}
+            mid_dict = {}
+            cat_dict = {}
+
+            iddd = 0
+            for line in fin:
+                arr = line.strip("\n").split("\t")
+                clk = arr[0]
+                uid = arr[1]
+                mid = arr[2]
+                cat = arr[3]
+                mid_list = arr[4]
+                cat_list = arr[5]
+                if uid not in uid_dict:
+                    uid_dict[uid] = 0
+                uid_dict[uid] += 1
+                if mid not in mid_dict:
+                    mid_dict[mid] = 0
+                mid_dict[mid] += 1
+                if cat not in cat_dict:
+                    cat_dict[cat] = 0
+                cat_dict[cat] += 1
+                if len(mid_list) == 0:
+                    continue
+                for m in mid_list.split("^B"):
+                    if m not in mid_dict:
+                        mid_dict[m] = 0
+                    mid_dict[m] += 1
+                #print iddd
+                iddd += 1
+                for c in cat_list.split("^B"):
+                    if c not in cat_dict:
+                        cat_dict[c] = 0
+                    cat_dict[c] += 1
+
+            sorted_uid_dict = sorted(uid_dict.iteritems(), key=lambda x:x[1], reverse=True)
+            sorted_mid_dict = sorted(mid_dict.iteritems(), key=lambda x:x[1], reverse=True)
+            sorted_cat_dict = sorted(cat_dict.iteritems(), key=lambda x:x[1], reverse=True)
+
+            uid_voc = {}
+            index = 0
+            for key, value in sorted_uid_dict:
+                uid_voc[key] = index
+                index += 1
+
+            mid_voc = {}
+            mid_voc["default_mid"] = 0
+            index = 1
+            for key, value in sorted_mid_dict:
+                mid_voc[key] = index
+                index += 1
+
+            cat_voc = {}
+            cat_voc["default_cat"] = 0
+            index = 1
+            for key, value in sorted_cat_dict:
+                cat_voc[key] = index
+                index += 1
+            cPickle.dump(uid_voc, fout1)
+            cPickle.dump(mid_voc, fout2)
+            cPickle.dump(cat_voc, fout3)
+        #end-with
 
 if __name__ == '__main__':
     luigi.run()
