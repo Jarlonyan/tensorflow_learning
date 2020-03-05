@@ -1,5 +1,8 @@
 #coding=utf-8
 #https://github.com/jxyyjm/tensorflow_test/blob/master/src/deep_and_cross.py
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import tensorflow as tf
 import argparse
@@ -7,11 +10,29 @@ import sys
 import shutil
 import argparse
 import sys
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from utils import tools
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '--model_dir', type=str, default='/tmp/census_model',
+    help='Base directory for the model.')
+parser.add_argument(
+    '--model_type', type=str, default='deep_cross',
+    help="Valid model types: {'wide', 'deep', 'wide_deep', 'deep_cross'}.")
+parser.add_argument(
+    '--train_epochs', type=int, default=40, help='Number of training epochs.')
+parser.add_argument(
+    '--epochs_per_eval', type=int, default=2,
+    help='The number of training epochs to run between evaluations.')
+parser.add_argument(
+    '--batch_size', type=int, default=40, help='Number of examples per batch.')
+parser.add_argument(
+    '--train_data', type=str, default='/tmp/census_data/adult.data',
+    help='Path to the training data.')
+parser.add_argument(
+    '--test_data', type=str, default='/tmp/census_data/adult.test',
+    help='Path to the test data.')
 
 _CSV_COLUMNS = [
     'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship',
