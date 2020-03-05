@@ -10,12 +10,14 @@ import sys
 import shutil
 import argparse
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from utils import tools
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--model_dir', type=str, default='/tmp/census_model',
+    '--model_dir', type=str, default='model_dir',
     help='Base directory for the model.')
 parser.add_argument(
     '--model_type', type=str, default='deep_cross',
@@ -28,10 +30,10 @@ parser.add_argument(
 parser.add_argument(
     '--batch_size', type=int, default=40, help='Number of examples per batch.')
 parser.add_argument(
-    '--train_data', type=str, default='/tmp/census_data/adult.data',
+    '--train_data', type=str, default='data/adult.data',
     help='Path to the training data.')
 parser.add_argument(
-    '--test_data', type=str, default='/tmp/census_data/adult.test',
+    '--test_data', type=str, default='data/adult.test',
     help='Path to the test data.')
 
 _CSV_COLUMNS = [
@@ -249,5 +251,6 @@ def main():
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
     FLAGS, unparsed = parser.parse_known_args()
-    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    #tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    main()
 
