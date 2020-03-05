@@ -1,5 +1,6 @@
 #coding=utf-8
 import luigi
+import random
 import collections
 
 class RawMetaData(luigi.ExternalTask):
@@ -54,14 +55,14 @@ class OnlineJoiner(luigi.Task):
         return luigi.LocalTarget('instances.data')
 
     def run(self):
-        user_map = collections.default(list)
-        item_map = collections.default(list)
+        user_map = collections.defaultdict(list)
+        item_map = collections.defaultdict(list)
         item_list = []
         with self.input()[0].open('r') as fin_item, self.input()[1].open('r') as fin_rev, \
             self.output().open('w') as fout:
             for line in fin_rev:
                 items = line.strip().split("\t")
-                user_map[items[0]].append(("\t").join(items), float(items[-1]))
+                user_map[items[0]].append(("\t".join(items), float(items[-1])))
                 item_list.append(items[1])
 
             for line in fin_item:
@@ -84,8 +85,8 @@ class OnlineJoiner(luigi.Task):
                         j += 1
                         if j==1:
                             break
-                    if asin in meta_map:
-                        print>>fout, "1" + "\t" + line + "\t" + meta_map[asin]
+                    if asin in item_map:
+                        print>>fout, "1" + "\t" + line + "\t" + item_map[asin]
                     else:
                         print>>fout, "1" + "\t" + line + "\t" + "default_cat"
                 #end-for
