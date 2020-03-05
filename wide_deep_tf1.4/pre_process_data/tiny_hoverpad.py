@@ -47,7 +47,6 @@ class ReviewInfo(luigi.Task):
         #end-with
 
 class OnlineJoiner(luigi.Task):
-    n = luigi.IntParameter(default=10)
     def requires(self):
         return [ItemInfo(), ReviewInfo()]
 
@@ -91,6 +90,41 @@ class OnlineJoiner(luigi.Task):
                         print>>fout, "1" + "\t" + line + "\t" + "default_cat"
                 #end-for
             #end-for
+        #end-with
+
+class SplitInstances(luigi.Task):
+    def requires(self):
+        return OnlineJoiner()
+
+    def output(self):
+        return luigi.LocalTarget('split_instances.data')
+
+    def run(self):
+        with self.input().open('r') as fin, self.output().open('w') as fout:
+            user_count = collections.defaultdict(int)
+            for line in fin:
+                line = line.strip()
+                user = line.split("\t")[1]
+                user_count[user] += 1
+            fin.seek(0)
+            i = 0
+            last_user = "A26ZDKC53OP6JD"
+            for line in fin:
+                line = line.strip()
+                user = line.split("\t")[1]
+                if user == last_user:
+                    if i < user_count[user] - 2:  # 1 + negative samples
+                        print>>fout, "20180118" + "\t" + line
+                    else:
+                        print>>fout, "20190119" + "\t" + line
+                else:
+                    last_user = user
+                    i = 0
+                    if i < user_count[user] - 2:
+                        print>>fout, "20180118" + "\t" + line
+                    else:
+                        print>>fout, "20190119" + "\t" + line
+                i += 1
         #end-with
 
 if __name__ == '__main__':

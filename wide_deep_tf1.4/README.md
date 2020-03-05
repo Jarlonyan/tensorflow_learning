@@ -3,8 +3,8 @@
 ```
 sudo pip install tensorflow==1.4
 sudo pip install keras=2.2.0
+sudo pip install luigi
 ```
-
 
 + 参考：
 https://github.com/mouna99/dien.git
