@@ -152,16 +152,16 @@ def cross_op2(x0, x, w, b):
 
 def build_model(features, labels, mode, params):
     columns = build_columns()
-    input_layer = tf.feature_column.input_layer(features=features, feature_column=columns)
+    input_layer = tf.feature_column.input_layer(features=features, feature_columns=columns)
     print ('features.shape=', features)
 
-    columns_num = input_layer.get_shape().as_list()[1]
+    column_num = input_layer.get_shape().as_list()[1]
     print ('column_num, before cross_variable_create:', column_num)
 
     c_w_1, c_b_1 = cross_variable_create(column_num)
     c_w_2, c_b_2 = cross_variable_create(column_num)
     c_layer_1 = cross_op(input_layer, input_layer, c_w_1, c_b_1) + input_layer
-    c_layer_2 = cross_op(input_layer, c_layer_1, c_w_2) + c_layer_1
+    c_layer_2 = cross_op(input_layer, c_layer_1, c_w_2, c_b_2) + c_layer_1
     c_layer_5 = c_layer_2
 
     h_layer_1 = tf.layers.dense(inputs=input_layer, units=50, activation=tf.nn.relu, use_bias=True)
@@ -176,7 +176,7 @@ def build_model(features, labels, mode, params):
     o_prob = tf.nn.sigmoid(o_layer)
 
     predictions = tf.cast((o_prob>0.5), tf.float32)
-    labels = tf.cast((labels, tf.float32))
+    labels = tf.cast(labels, tf.float32)
 
     prediction_dict = {'income_bracket': predictions}
     loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=o_layer))
