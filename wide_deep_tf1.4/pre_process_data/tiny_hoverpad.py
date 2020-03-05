@@ -24,7 +24,7 @@ class ItemInfo(luigi.Task):
 
 class RawReviewData(luigi.ExternalTask):
     def output(self):
-        return luigi.LocalTarget('../../data/review_Books.json')
+        return luigi.LocalTarget('../../data/tiny_review_Books.json')
 
 class ReviewInfo(luigi.Task):
     def requires(self):
@@ -42,7 +42,7 @@ class ReviewInfo(luigi.Task):
                 itemID = obj["asin"]
                 rating = obj["overall"]
                 time = obj["unixReviewTime"]
-                print>>fo, userID + "\t" + itemID + "\t" + str(rating) + "\t" + str(time)
+                print>>f_out, userID + "\t" + itemID + "\t" + str(rating) + "\t" + str(time)
         #end-with
 
 class OnlineJoiner(luigi.Task):
@@ -51,17 +51,17 @@ class OnlineJoiner(luigi.Task):
         return [ItemInfo(), ReviewInfo()]
 
     def output(self):
-        return luigi.LocalTarget('jointed_new.data')
+        return luigi.LocalTarget('instances.data')
 
     def run(self):
         user_map = collections.default(list)
         item_map = collections.default(list)
         item_list = []
-        with self.input()[0].open('r') as fin_item, self.input()[1].open('r') as fin_rev \
+        with self.input()[0].open('r') as fin_item, self.input()[1].open('r') as fin_rev, \
             self.output().open('w') as fout:
             for line in fin_rev:
                 items = line.strip().split("\t")
-                user_map[items[0]].append(("\t").join(items), float(items[-1])))
+                user_map[items[0]].append(("\t").join(items), float(items[-1]))
                 item_list.append(items[1])
 
             for line in fin_item:
