@@ -136,7 +136,7 @@ def cross_op2(x0, x, w, b):
         res[i] = dc
     return res + x0
 
-def build_model(features, labels, mode, params):
+def build_deep_cross_model(features, labels, mode, params):
     columns = build_columns()
     input_layer = tf.feature_column.input_layer(features=features, feature_columns=columns)
     print ('features.shape=', features)
@@ -182,7 +182,7 @@ def build_model(features, labels, mode, params):
 def build_estimator(model_dir, model_type):
     run_config = tf.estimator.RunConfig().replace(session_config=tf.ConfigProto(device_count={'GPU': 0}))
     if model_type == 'deep_cross':
-        return tf.estimator.Estimator(model_fn = build_model, model_dir=model_dir, config=run_config)
+        return tf.estimator.Estimator(model_fn = build_deep_cross_model, model_dir=model_dir, config=run_config)
     else: 
         print ('error')
 
@@ -217,8 +217,7 @@ def main():
 
     # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
     for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
-        model.train(input_fn=lambda: input_fn( FLAGS.train_data, FLAGS.epochs_per_eval, \
-                                True, FLAGS.batch_size))
+        model.train(input_fn=lambda: input_fn( FLAGS.train_data, FLAGS.epochs_per_eval, True, FLAGS.batch_size))
 
     results = model.evaluate(input_fn=lambda: input_fn(FLAGS.test_data, 1, False, FLAGS.batch_size))
 
