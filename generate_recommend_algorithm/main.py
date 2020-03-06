@@ -13,8 +13,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from utils import tools
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_dir', type=str, default='model_dir', help='Base directory for the model.')
 parser.add_argument('--model_type', type=str, default='deep_cross', help="wide, deep, wide_deep, deep_cross.")
@@ -182,12 +180,9 @@ def build_model(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
 def build_estimator(model_dir, model_type):
-    run_config = tf.estimator.RunConfig().replace(
-    session_config=tf.ConfigProto(device_count={'GPU': 0}))
+    run_config = tf.estimator.RunConfig().replace(session_config=tf.ConfigProto(device_count={'GPU': 0}))
     if model_type == 'deep_cross':
-        return tf.estimator.Estimator(model_fn = build_model,
-                    model_dir=model_dir,
-                    config=run_config)
+        return tf.estimator.Estimator(model_fn = build_model, model_dir=model_dir, config=run_config)
     else: 
         print ('error')
 
@@ -225,15 +220,14 @@ def main():
         model.train(input_fn=lambda: input_fn( FLAGS.train_data, FLAGS.epochs_per_eval, \
                                 True, FLAGS.batch_size))
 
-    results = model.evaluate(input_fn=lambda: input_fn(
-        FLAGS.test_data, 1, False, FLAGS.batch_size))
+    results = model.evaluate(input_fn=lambda: input_fn(FLAGS.test_data, 1, False, FLAGS.batch_size))
 
     # Display evaluation metrics
     print('Results at epoch', (n + 1) * FLAGS.epochs_per_eval)
     print('-' * 60)
 
     for key in sorted(results):
-      print('%s: %s' % (key, results[key]))
+        print('%s: %s' % (key, results[key]))
 
 
 if __name__ == '__main__':
