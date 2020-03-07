@@ -219,14 +219,14 @@ def main():
     for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
         model.train(input_fn=lambda: input_fn( FLAGS.train_data, FLAGS.epochs_per_eval, True, FLAGS.batch_size))
 
-    results = model.evaluate(input_fn=lambda: input_fn(FLAGS.test_data, 1, False, FLAGS.batch_size))
+        results = model.evaluate(input_fn=lambda: input_fn(FLAGS.test_data, 1, False, FLAGS.batch_size))
 
-    # Display evaluation metrics
-    print('Results at epoch', (n + 1) * FLAGS.epochs_per_eval)
-    print('-' * 60)
+        # Display evaluation metrics
+        print('Results at epoch', (n + 1) * FLAGS.epochs_per_eval)
+        print('-' * 60)
 
-    for key in sorted(results):
-        print('%s: %s' % (key, results[key]))
+        for key in sorted(results):
+            print('%s: %s' % (key, results[key]))
 
 
 if __name__ == '__main__':
