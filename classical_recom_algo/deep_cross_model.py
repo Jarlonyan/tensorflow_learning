@@ -131,7 +131,7 @@ def cross_op2(x0, x, w, b):
     batch_num = x0.get_shape().as_list()[0]
     res = []
     for i in range(batch_num):
-        dd = tf.matply(x0[i,:,:], tf.transpose(x[i,:,:]))
+        dd = tf.matmul(x0[i,:,:], tf.transpose(x[i,:,:]))
         dc = tf.matmul(dd, w) + b
         res[i] = dc
     return res + x0
