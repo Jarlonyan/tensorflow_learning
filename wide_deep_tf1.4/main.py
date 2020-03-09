@@ -78,7 +78,6 @@ def prepare_data(input, target, maxlen = None, return_neg = False):
         return uids, mids, cats, mid_his, cat_his, mid_mask, numpy.array(target), numpy.array(lengths_x)
 
 def eval(sess, test_data, model, model_path):
-
     loss_sum = 0.
     accuracy_sum = 0.
     aux_loss_sum = 0.

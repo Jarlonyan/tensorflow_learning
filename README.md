@@ -23,4 +23,8 @@ sudo pip install keras=2.2.0
 + DIEN
      https://github.com/mouna99/dien.git
 
++ DeepCross 预测一个汽车明年会买保险的概率
+    https://github.com/Leon0427/DCN/blob/master/deep_and_cross.py
+
+
 

@@ -30,10 +30,7 @@ value = tf.Variable(tf.constant( \
     dtype=tf.float32), name='value')
 
 gpu_options = tf.GPUOptions(allow_growth = True)
-with tf.Session(config = tf.ConfigProto( \
-                gpu_options = gpu_options, \
-                allow_soft_placement = True, \
-                log_device_placement = False)) as sess:
+with tf.Session(config = tf.ConfigProto(gpu_options = gpu_options, allow_soft_placement = True, log_device_placement = False)) as sess:
   sess.run(tf.global_variables_initializer())
   print '='*20, 'query'
   print sess.run(query)
