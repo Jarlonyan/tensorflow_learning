@@ -1,8 +1,16 @@
 #coding=utf-8
 
-instance_train_file = 'data/instance_train.data'
-instance_valid_file = 'data/instance_valid.data'
-instance_test_file = 'data/instance_test.data'
+#pre-process
+numerical_features = ['all_launch_count', 'last_launch', 'all_video_count', 'last_video', 'all_video_day', \
+                      'all_action_count', 'last_action', 'all_action_day', 'register_day']
+single_features = ['register_type', 'device_type']
+multi_features = []
+
+
+#instance
+train_instance_file = 'data/train_instance.data'
+valid_instance_file = 'data/valid_instance.data'
+test_instance_file = 'data/test_instance.data'
 
 # model
 FM_layer = True

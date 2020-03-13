@@ -5,6 +5,7 @@ import tensorflow as tf
 import random
 import time
 import conf
+import tools
 
 class xDeepFM(object):
     def __init__(self):
@@ -16,7 +17,7 @@ class xDeepFM(object):
         self._init_Variable()
         self._init_Model()
         self.valid_batch = self._get_batch(self.valid, -1)
-        self.valid_label = get_label(self.valid_batch[0], 2)
+        self.valid_label = tools.get_label(self.valid_batch[0], 2)
         self.valid_dict = {
             self.ph['single_index']: self.valid_batch[1],
             self.ph['numerical_index']: self.valid_batch[2],
@@ -37,9 +38,9 @@ class xDeepFM(object):
         self._save_loss()
 
     def _init_data(self):
-        self.train = _get_data(conf.train_save_file)
-        self.valid = _get_data(conf.valid_save_file)
-        self.test = _get_data(conf.test_save_file)
+        self.train = tools._get_data(conf.train_instance_file)
+        self.valid = tools._get_data(conf.valid_instance_file)
+        self.test = tools._get_data(conf.test_instance_file)
 
     def _get_batch(self, data, idx):
         start = time.time()
@@ -286,7 +287,7 @@ class xDeepFM(object):
         self.optimizer = tf.train.AdagradOptimizer(learning_rate=conf.learning_rate).minimize(self.loss)
 
     def _train(self):
-        print('....')
+        print('begin to train model......')
         with tf.Session() as self.sess:
             self.sess.run(tf.global_variables_initializer())
             allDataLength = len(self.train)
@@ -302,7 +303,7 @@ class xDeepFM(object):
                                   self.ph['single_index']: now_batch[1],
                                   self.ph['numerical_index']: now_batch[2],
                                   self.ph['value']: now_batch[-1],
-                                  self.ph['label']: get_label(now_batch[0], 2),
+                                  self.ph['label']: tools.get_label(now_batch[0], 2),
                                   self.ph['numerical_value']:now_batch[3],
                                   self.train_phase:True
                                   }
@@ -320,7 +321,7 @@ class xDeepFM(object):
                         self.global_step.append(global_step)
                         self.global_train_auc.append(_loss)
                         self.global_valid_auc.append(__loss)
-                        print('step:',global_step,'train loss:',_loss,'valid loss:',__loss,'valid_auc:',auc_score(__out,get_label(self.valid_batch[0],2),2))
+                        print('step:',global_step,'train loss:',_loss,'valid loss:',__loss,'valid_auc:', tools.auc_score(__out, tools.get_label(self.valid_batch[0],2),2))
 
     def _save_loss(self):
         loss_result = pd.DataFrame({
