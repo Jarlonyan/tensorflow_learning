@@ -11,7 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # features
 Numerical_features = ['all_launch_count', 'last_launch', 'all_video_count', 'last_video', 'all_video_day', \
-                    'all_action_count', 'last_action', 'all_action_day', 'register_day']
+                      'all_action_count', 'last_action', 'all_action_day', 'register_day']
 Single_features = ['register_type', 'device_type']
 Multi_features = []
 
@@ -19,23 +19,6 @@ Num_embedding = True
 Single_feature_frequency = 10
 Multi_feature_frequency = 0
 
-# model
-FM_layer = True
-DNN_layer = True
-CIN_layer = False
-
-Uuse_numerical_embedding = False
-
-Embedding_size = 16
-Dnn_net_size = [128, 64, 32]
-Cross_layer_size = [10, 10, 10]
-Cross_direct = False
-Cross_output_size = 1
-
-# train
-Batch_size = 4096
-Epochs = 4000
-Learning_rate = 0.01
 
 def get_dict(train, valid, test):
     global_emb_idx = 0
@@ -52,7 +35,6 @@ def get_dict(train, valid, test):
             #for NaN
             backup_dict[s] = global_emb_idx
             global_emb_idx += 1
-
     if Single_features:
         for s in Single_features:
             #each field
@@ -89,7 +71,6 @@ def get_dict(train, valid, test):
                     global_emb_ix += 1
             multi_dict[s] = current_dict
             backup_dict[s] = global_emb_idx
-
     return global_emb_idx, num_dict, single_dict, multi_dict, backup_dict
 
 def trans_raw_to_instance(data, num_dict, single_dict, multi_dict, backup_dict, instance_file):
@@ -149,7 +130,6 @@ def pre_process_data():
     trans_raw_to_instance(train, num_dict, single_dict, multi_dict, backup_dict, 'data/train_instance.data') 
     trans_raw_to_instance(valid, num_dict, single_dict, multi_dict, backup_dict, 'data/valid_instance.data') 
     trans_raw_to_instance(test, num_dict, single_dict, multi_dict, backup_dict, 'data/test_instance.data') 
-    
 
 
 def main():

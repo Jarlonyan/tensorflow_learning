@@ -26,7 +26,7 @@ class xDeepFM(object):
             self.train_phase: False
         }
         if conf.multi_features:
-            for idx, s in enumerate(Config.multi_features):
+            for idx, s in enumerate(conf.multi_features):
                 self.valid_dict[self.ph['multi_index_%s' % s]] = self.valid_batch[4]
                 self.valid_dict[self.ph['multi_value_%s' % s]] = self.valid_batch[5]
         self.global_step = []
@@ -37,9 +37,9 @@ class xDeepFM(object):
         self._save_loss()
 
     def _init_data(self):
-        self.train = _get_data(Config.train_save_file)
-        self.valid = _get_data(Config.valid_save_file)
-        self.test = _get_data(Config.test_save_file)
+        self.train = _get_data(conf.train_save_file)
+        self.valid = _get_data(conf.valid_save_file)
+        self.test = _get_data(conf.test_save_file)
 
     def _get_batch(self, data, idx):
         start = time.time()
@@ -48,7 +48,7 @@ class xDeepFM(object):
         elif (idx + 1) * conf.batch_size <= len(data):
             batch_data = data[idx*conf.batch_size:(idx+1)*conf.batch_size]
         else:
-            batch_data = data[idx*Config.batch_size:]
+            batch_data = data[idx*conf.batch_size:]
         final_label = []
         final_single_index = []
         final_numerical_value = []
@@ -72,7 +72,7 @@ class xDeepFM(object):
             if self.single_size + self.numerical_size:
                 for i in range(1 + self.single_size, 1 + self.single_size + self.numerical_size):
                     single_pair = line_data[i].split(':')
-                    if not Config.use_numerical_embedding:
+                    if not conf.use_numerical_embedding:
                         line_numerical_value.append(float(single_pair[1]))
                     if float(single_pair[1]) == 0:
                         line_index.append(int(9999))
@@ -105,23 +105,23 @@ class xDeepFM(object):
                                           shape=[None, self.single_size + self.numerical_size + self.multi_size])
         self.ph['single_index'] = tf.placeholder(dtype=tf.int32, shape=[None, self.single_size])
         self.ph['numerical_index'] = tf.placeholder(dtype=tf.int32, shape=[None, self.numerical_size])
-        for s in Config.multi_features:
+        for s in conf.multi_features:
             self.ph['multi_index_%s' % s] = tf.placeholder(dtype=tf.int64, shape=[None, 2])
             self.ph['multi_value_%s' % s] = tf.placeholder(dtype=tf.int64, shape=[None])
-        if not Config.use_numerical_embedding:
+        if not conf.use_numerical_embedding:
             self.ph['numerical_value'] = tf.placeholder(dtype=tf.float32,shape=[None,self.numerical_size])
 
     def _init_Variable(self):
         self.vr = {}
         self.vr['single_second_embedding'] = tf.get_variable(name='single_second_embedding',
-                                                             shape=(10000, Config.embedding_size),
+                                                             shape=(10000, conf.embedding_size),
                                                              initializer=tf.glorot_uniform_initializer())
         self.vr['numerical_second_embedding'] = tf.get_variable(name='numerical_second_embedding',
-                                                             shape=(10000, Config.embedding_size),
+                                                             shape=(10000, conf.embedding_size),
                                                              initializer=tf.glorot_uniform_initializer())
-        for s in Config.multi_features:
+        for s in conf.multi_features:
             self.vr['multi_second_embedding_%s' % s] = tf.get_variable(name='multi_second_embedding_%s' % s,
-                                                                       shape=(10000, Config.embedding_size),
+                                                                       shape=(10000, conf.embedding_size),
                                                                        initializer=tf.glorot_uniform_initializer())
 
         self.vr['single_first_embedding'] = tf.get_variable(name='single_first_embedding',
@@ -130,16 +130,16 @@ class xDeepFM(object):
         self.vr['numerical_first_embedding'] = tf.get_variable(name='numerical_first_embedding',
                                                             shape=(10000, 1),
                                                             initializer=tf.glorot_uniform_initializer())
-        for s in Config.multi_features:
+        for s in conf.multi_features:
             self.vr['multi_first_embedding_%s' % s] = tf.get_variable(name='multi_first_embedding_%s' % s,
                                                                       shape=(10000, 1),
                                                                       initializer=tf.glorot_uniform_initializer())
         # DNN part
-        if Config.use_numerical_embedding:
-            dnn_net = [self.embedding_length] + Config.dnn_net_size
+        if conf.use_numerical_embedding:
+            dnn_net = [self.embedding_length] + conf.dnn_net_size
         else:
-            dnn_net = [self.embedding_length - self.numerical_size * Config.embedding_size + self.numerical_size] + Config.dnn_net_size
-        for i in range(len(Config.dnn_net_size)):
+            dnn_net = [self.embedding_length - self.numerical_size * conf.embedding_size + self.numerical_size] + conf.dnn_net_size
+        for i in range(len(conf.dnn_net_size)):
             self.vr['W_%d' % i] = tf.get_variable(name='W_%d' % i, shape=[dnn_net[i], dnn_net[i + 1]], initializer=tf.glorot_uniform_initializer())
             self.vr['b_%d' % i] = tf.get_variable(name='b_%d' % i, shape=[dnn_net[i + 1]], initializer=tf.zeros_initializer())
         # output
@@ -153,12 +153,12 @@ class xDeepFM(object):
                                          shape=[-1, self.numerical_size]
                                          )
         first_multi_result = []
-        if Config.multi_features:
-            for s in Config.multi_features:
+        if conf.multi_features:
+            for s in conf.multi_features:
                 temp_multi_result = tf.nn.embedding_lookup_sparse(self.vr['multi_first_embedding_%s' % s],
                                                                   tf.SparseTensor(indices=self.ph['multi_index_%s' % s],
                                                                                   values=self.ph['multi_value_%s' % s],
-                                                                                  dense_shape=(Config.batch_size, Config.embedding_size)),
+                                                                                  dense_shape=(conf.batch_size, conf.embedding_size)),
                                                                   None,
                                                                   combiner="sum"
                                                                   )
@@ -173,19 +173,19 @@ class xDeepFM(object):
         # second embedding
         second_single_result = tf.reshape(tf.nn.embedding_lookup(self.vr['single_second_embedding'],
                                                                  self.ph['single_index']),
-                                          shape=[-1, Config.embedding_size * self.single_size]
+                                          shape=[-1, conf.embedding_size * self.single_size]
                                           )
         second_numerical_result = tf.reshape(tf.nn.embedding_lookup(self.vr['numerical_second_embedding'],
                                                                  self.ph['numerical_index']),
-                                          shape=[-1, Config.embedding_size * self.numerical_size]
+                                          shape=[-1, conf.embedding_size * self.numerical_size]
                                           )
-        if Config.multi_features:
+        if conf.multi_features:
             second_multi_result = []
-            for s in Config.multi_features:
+            for s in conf.multi_features:
                 temp_multi_result = tf.nn.embedding_lookup_sparse(self.vr['multi_second_embedding_%s' % s],
                                                                   tf.SparseTensor(indices=self.ph['multi_index_%s' % s],
                                                                                   values=self.ph['multi_value_%s' % s],
-                                                                                  dense_shape=(Config.batch_size, Config.embedding_size)),
+                                                                                  dense_shape=(conf.batch_size, conf.embedding_size)),
                                                                   None,
                                                                   combiner="sum"
                                                                   )
@@ -196,13 +196,13 @@ class xDeepFM(object):
         else:
             self.DNN_input = tf.concat([second_single_result], axis=1)
         self.middle_fm_input = tf.concat([self.DNN_input,second_numerical_result], axis=1)
-        if Config.use_numerical_embedding:
+        if conf.use_numerical_embedding:
             self.DNN_input = tf.concat([self.DNN_input,second_numerical_result], axis=1)
         else:
             self.DNN_input = tf.concat([self.DNN_input,self.ph['numerical_value']],axis=1)
         self.shape = tf.shape(self.DNN_input)
         # second output
-        second_FM_input = tf.reshape(self.middle_fm_input, shape=[-1, self.single_size + self.numerical_size + self.multi_size, Config.embedding_size])
+        second_FM_input = tf.reshape(self.middle_fm_input, shape=[-1, self.single_size + self.numerical_size + self.multi_size, conf.embedding_size])
 
         summed_features_emb = tf.reduce_sum(second_FM_input, 1)
         summed_features_emb_square = tf.square(summed_features_emb)
@@ -212,23 +212,23 @@ class xDeepFM(object):
 
         dnn_output = self.DNN_input
         # DNN output
-        for i in range(len(Config.dnn_net_size)):
+        for i in range(len(conf.dnn_net_size)):
             self.DNN_input = tf.add(tf.matmul(self.DNN_input, self.vr['W_%d' % i]), self.vr['b_%d' % i])
             self.DNN_input = tf.layers.batch_normalization(self.DNN_input,training=self.train_phase)
             dnn_output = tf.nn.relu(self.DNN_input)
 
         # CIN
-        D = Config.embedding_size
+        D = conf.embedding_size
         final_result = []
         final_len = 0
         field_nums = [self.field_size]
-        if Config.multi_features:
-            nn_input = tf.reshape(tf.concat([second_single_result, second_multi_result], axis=1), shape=[-1, self.field_size, Config.embedding_size])
+        if conf.multi_features:
+            nn_input = tf.reshape(tf.concat([second_single_result, second_multi_result], axis=1), shape=[-1, self.field_size, conf.embedding_size])
         else:
-            nn_input = tf.reshape(second_single_result, shape=[-1, self.field_size, Config.embedding_size])
+            nn_input = tf.reshape(second_single_result, shape=[-1, self.field_size, conf.embedding_size])
         cin_layers = [nn_input]
         split_tensor_0 = tf.split(nn_input, D * [1], 2)
-        for idx, layer_size in enumerate(Config.cross_layer_size):
+        for idx, layer_size in enumerate(conf.cross_layer_size):
             now_tensor = tf.split(cin_layers[-1], D * [1], 2)
             # Hk x m
             dot_result_m = tf.matmul(split_tensor_0, now_tensor, transpose_b=True)
@@ -239,13 +239,13 @@ class xDeepFM(object):
             b = tf.get_variable(name="f_b" + str(idx), shape=[layer_size], dtype=tf.float32, initializer=tf.zeros_initializer())
             curr_out = tf.nn.relu(tf.nn.bias_add(curr_out, b))
             curr_out = tf.transpose(curr_out, perm=[0, 2, 1])
-            if Config.cross_direct:
+            if conf.cross_direct:
                 direct_connect = curr_out
                 next_hidden = curr_out
                 final_len += layer_size
                 field_nums.append(int(layer_size))
             else:
-                if idx != len(Config.cross_layer_size) - 1:
+                if idx != len(conf.cross_layer_size) - 1:
                     next_hidden, direct_connect = tf.split(curr_out, 2 * [int(layer_size / 2)], 1)
                     final_len += int(layer_size / 2)
                 else:
@@ -258,23 +258,23 @@ class xDeepFM(object):
             cin_layers.append(next_hidden)
         result = tf.concat(final_result, axis=1)
         result = tf.reduce_sum(result, -1)
-        w_nn_output1 = tf.get_variable(name='w_nn_output1', shape=[final_len, Config.cross_output_size], dtype=tf.float32)
-        b_nn_output1 = tf.get_variable(name='b_nn_output1', shape=[Config.cross_output_size], dtype=tf.float32, initializer=tf.zeros_initializer())
+        w_nn_output1 = tf.get_variable(name='w_nn_output1', shape=[final_len, conf.cross_output_size], dtype=tf.float32)
+        b_nn_output1 = tf.get_variable(name='b_nn_output1', shape=[conf.cross_output_size], dtype=tf.float32, initializer=tf.zeros_initializer())
         CIN_out = tf.nn.xw_plus_b(result, w_nn_output1, b_nn_output1)
 
         # final output
         output_length = 0
         to_concat = []
-        if Config.FM_layer:
+        if conf.FM_layer:
             to_concat.append(y_first_order)
             to_concat.append(y_second_order)
-            output_length += self.field_size + Config.embedding_size
-        if Config.CIN_layer:
+            output_length += self.field_size + conf.embedding_size
+        if conf.CIN_layer:
             to_concat.append(CIN_out)
-            output_length += Config.cross_output_size
-        if Config.DNN_layer:
+            output_length += conf.cross_output_size
+        if conf.DNN_layer:
             to_concat.append(dnn_output)
-            output_length += Config.dnn_net_size[-1]
+            output_length += conf.dnn_net_size[-1]
 
         output = tf.concat(to_concat, axis=1)
 
@@ -283,7 +283,7 @@ class xDeepFM(object):
         final_logits = tf.add(tf.matmul(output, self.vr['final_w']), self.vr['final_b'])
         self.softmax_output = tf.nn.softmax(final_logits)
         self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.ph['label'], logits=final_logits))
-        self.optimizer = tf.train.AdagradOptimizer(learning_rate=Config.learning_rate).minimize(self.loss)
+        self.optimizer = tf.train.AdagradOptimizer(learning_rate=conf.learning_rate).minimize(self.loss)
 
     def _train(self):
         print('....')
@@ -291,9 +291,9 @@ class xDeepFM(object):
             self.sess.run(tf.global_variables_initializer())
             allDataLength = len(self.train)
             global_step = 0
-            print('total step:%d'%(Config.epochs * (int(allDataLength / Config.batch_size) + 1)))
-            for i in range(Config.epochs):
-                num_batchs = int(allDataLength / Config.batch_size) + 1
+            print('total step:%d'%(conf.epochs * (int(allDataLength / conf.batch_size) + 1)))
+            for i in range(conf.epochs):
+                num_batchs = int(allDataLength / conf.batch_size) + 1
                 for j in range(num_batchs):
                     global_step  += 1
                     now_batch = self._get_batch(self.train,j)
@@ -306,8 +306,8 @@ class xDeepFM(object):
                                   self.ph['numerical_value']:now_batch[3],
                                   self.train_phase:True
                                   }
-                    if Config.multi_features:
-                        for idx,s in enumerate(Config.multi_features):
+                    if conf.multi_features:
+                        for idx,s in enumerate(conf.multi_features):
                             batch_dict[self.ph['multi_index_%s'%s]]= now_batch[4]
                             batch_dict[self.ph['multi_value_%s'%s]] = now_batch[5]
                     end = time.time()
