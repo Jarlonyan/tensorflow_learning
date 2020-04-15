@@ -17,7 +17,7 @@ def generate(sample_size, mean, cov, label_dim, diff, one_hot_flag):
         Y1 = (i+1)*np.ones(samples_per_class)
         X0 = np.concatenate((X0,X1))
         Y0 = np.concatenate((Y0,Y1))
-    if one_hot_flag == True: #Trddue表示one-hot编码标签, 将0转成[1 0]
+    if one_hot_flag == True: #True表示one-hot编码标签, 将0转成[1 0]
         hot_list = []
         for idx in Y0[:]:
             one_hot = [int(idx==class_number) for class_number in range(num_classes)]
@@ -41,7 +41,6 @@ def main():
 
     #'''
     cates = [np.argmax(i) for i in Y]
-    print cates
     colors = ['r' if i==0 else 'b' if i==1 else 'y' for i in cates[:]]
     plt.scatter(X[:,0], X[:,1], c=colors)
     plt.xlabel('years')
