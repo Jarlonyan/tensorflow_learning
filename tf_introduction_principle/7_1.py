@@ -28,11 +28,14 @@ def generate(sample_size, mean, cov, label_dim, diff, one_hot_flag):
 def main():
     np.random.seed(0)
     input_dim = 2
-    label_dim = 3
+    label_dim = 1 #3
     num_classes = 2
+    mini_batch_size = 64
     mean = np.random.randn(num_classes)
     cov = np.eye(num_classes)
-    X,Y = generate(10, mean, cov, label_dim, [3.0, 4.0], True)
+    #X,Y = generate(1000, mean, cov, label_dim, [3.0, 4.0], True)
+    X,Y = generate(1000, mean, cov, label_dim, [3.0], False)
+
     '''
     colors = []
     for i in Y[:]:
@@ -59,10 +62,19 @@ def main():
     loss = tf.reduce_mean(cross_entropy)
     optimizer = tf.train.AdamOptimizer(0.001).minimize(loss)
 
+    err = tf.reduce_mean(tf.square(input_labels - output))
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        print sess.run(output, feed_dict={input_features:X, input_labels:Y})
-       
+        for epoch in range(10):
+            sum_err = 0.0
+            for i in range(np.int32(len(Y)/mini_batch_size)):
+                X_mini_batch = X[i*mini_batch_size : (i+1)*mini_batch_size, :]
+                Y_mini_batch = Y[i*mini_batch_size : (i+1)*mini_batch_size, :]
+
+                _,temp_loss, temp_err = sess.run([optimizer,loss, err], feed_dict={input_features:X_mini_batch, input_labels:Y_mini_batch})
+                sum_err += temp_err
+            print 'epoch=',epoch, ', loss=',temp_loss, ',avg_err=', sum_err/np.int32(len(Y)/mini_batch_size)
 
 if __name__ == "__main__":
     main()
