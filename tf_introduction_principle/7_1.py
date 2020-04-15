@@ -17,7 +17,7 @@ def generate(sample_size, mean, cov, label_dim, diff, one_hot_flag):
 
         X0 = np.concatenate((X0,X1))
         Y0 = np.concatenate((Y0,Y1))
-    if one_hot_flag == True: #True表示one-hot编码标签
+    if one_hot_flag == True: #True表示one-hot编码标签, 将0转成[1 0]
         class_ind = [Y0==class_number for class_number in range(num_classes)]
         Y0 = np.asarray(np.hstack(class_ind), dtype=np.float32)
     Y0 = np.reshape(Y0, (-1, label_dim))
@@ -31,8 +31,8 @@ def main():
     label_dim = 1 #3
     num_classes = 2
     mini_batch_size = 64
-    mean = np.random.randn(num_classes)
-    cov = np.eye(num_classes)
+    mean = np.random.randn(input_dim)
+    cov = np.eye(input_dim)
     #X,Y = generate(1000, mean, cov, label_dim, [3.0, 4.0], True)
     X,Y = generate(1000, mean, cov, label_dim, [3.0], False)
 
