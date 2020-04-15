@@ -20,6 +20,7 @@ V = tf.Variable(tf.constant( \
      [3.1, 3.4, 3.8, 3.0]],\
     dtype=tf.float32), name='value')
 
+'''
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     z = tf.matmul(Q, K, transpose_b=True)
@@ -36,4 +37,26 @@ with tf.Session() as sess:
     #A = tf.constant([[2.0,3.1], [5.0,6.0]])
     #B=tf.nn.softmax(A, dim=1)
     #print sess.run(B)
+'''
+
+def attention_fun(Q,K,scaled=True,masked=False):
+    attention = tf.matmul(Q,K,transpose_b=True)
+    if scaled:
+        d_k = tf.cast(tf.shape(K)[-1], dtype=tf.float32)
+        attention = tf.divide(attention, tf.sqrt(d_k))
+
+    attention = tf.nn.softmax(attention, dim=-1)
+    return attention
+
+def main():
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        attention = attention_fun(Q,K)
+        #print sess.run(attention)
+        output = tf.matmul(attention, V)
+        output = tf.reduce_mean(output, axis=1)
+        print sess.run(output)
+
+if __name__ == '__main__':
+    main()
 
