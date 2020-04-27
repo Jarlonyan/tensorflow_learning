@@ -1,4 +1,6 @@
 
+# 《深度学习之TensorFlow入门、原理与进阶实战》
+
 + requirements:
     + tensorflow 1.4.0
     + matplotlib 1.3.1
@@ -13,7 +15,7 @@
     ```
 
 + 解决错误
-    + `module' object has no attribute 'per_image_whitening'`
+    + `module' object has no attribute 'per_image_whitening'` : 
     `per_image_whitening` 改为：`per_image_standardization`
 
 

@@ -7,7 +7,7 @@ import numpy as np
 import pylab
 
 batch_size = 128
-data_dir = 'CIFAR_TensorFlow/data/cifar-10-batches-bin'
+data_dir = 'data/cifar-10-batches-bin'
 images_test, labels_test = cifar10_input.inputs(eval_data=True, data_dir=data_dir, batch_size=batch_size)
 
 sess = tf.InteractiveSession()
