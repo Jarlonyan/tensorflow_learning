@@ -228,6 +228,7 @@ class xDeepFM(object):
         else:
             nn_input = tf.reshape(second_single_result, shape=[-1, self.field_size, conf.embedding_size])
         cin_layers = [nn_input]
+        import pdb; pdb.set_trace()
         split_tensor_0 = tf.split(nn_input, D * [1], 2)
         for idx, layer_size in enumerate(conf.cross_layer_size):
             now_tensor = tf.split(cin_layers[-1], D * [1], 2)
