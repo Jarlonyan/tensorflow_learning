@@ -108,8 +108,6 @@ def main():
         #print sess.run(exp_out4)
         print sess.run(exp_out5)
 
-
-
 def attention():
     Q = tf.Variable(tf.constant(\
          [[1.1, 4.2, 1.3, 1.4], \
