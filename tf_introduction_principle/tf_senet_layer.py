@@ -5,20 +5,15 @@ import numpy as np
 
 def SENet_layer(embed_matrix, field_size, emb_size, pool_op, ratio):
     with tf.variable_scope('SENet_layer'):
-        with tf.variable_scope('pooling'):
-            if pool_op == 'max':
-                z = tf.reduce_max(embed_matrix, axis=2)  # bs*field_size*emb_size  ->  bs*field_size
-            elif pool_op == 'avg':
-                z = tf.reduce_mean(embed_matrix, axis=2)
+        if pool_op == 'max':
+            z = tf.reduce_max(embed_matrix, axis=2)  # bs*field_size*emb_size  ->  bs*field_size
+        elif pool_op == 'avg':
+            z = tf.reduce_mean(embed_matrix, axis=2)
+        z1 = tf.layers.dense(z, units=field_size//ratio, activation='relu')
+        a = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field_size
+        senet_embed = tf.multiply(embed_matrix, tf.expand_dims(a, axis=-1))   #(bs*field*emb) * (bs*field*1)
 
-        with tf.variable_scope('excitation'):
-            z1 = tf.layers.dense(z, units=field_size//ratio, activation='relu')
-            a = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field_size
-
-        with tf.variable_scope('reweight'):
-            senet_embed = tf.multiply(embed_matrix, tf.expand_dims(a, axis=-1))   #(bs*field*emb) * (bs*field*1)
-
-        return senet_embed
+    return senet_embed
 
 def main():
     embed_table = tf.constant([[0,    0,    0   , 0   , 0,   0],
