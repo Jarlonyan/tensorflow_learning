@@ -50,13 +50,13 @@ words_size = len(words)
 word_num_map = dict(zip(words, range(words_size)))
 
 print "字表大小=".encode('utf-8'), words_size
-wordlabel = get_ch_label_v(training_file, word_num_map)
-print wordlabel
+word_label = get_ch_label_v(training_file, word_num_map)
+print word_label
 
 
 #-----------model----------------- 
 learning_rate = 0.001
-training_epoch = 100
+training_epoch = 1000
 display_step = 60
 n_input = 4
 n_hidden1 = 256
@@ -77,9 +77,49 @@ pred = tf.contrib.layers.fully_connected(outputs[-1], words_size, activation_fn=
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=wordy)) 
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(size_input,1))
+correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(wordy,1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 savedir = "log/rnnword/"
 saver = tf.train.Saver(max_to_keep=1)
+
+with tf.Session() as session:
+    session.run(tf.global_variables_initializer())
+    step = 0
+    offset = random.randint(0, n_input+1)
+    end_offset = n_input + 1
+    acc_total = 0
+    loss_total = 0
+
+    ckpt = tf.train.latest_checkpoint(savedir)
+    print "ckpt:", ckpt
+    start_epo = 0
+    if ckpt != None:
+        saver.restore(session, ckpt)
+        idx = ckpt.find("-")
+        start_epo = int(ckpt[idx+1:])
+        step = start_epo
+
+    while step < training_epoch:
+        if offset > (len(training_data)-end_offset):
+            offset = random.randint(0, n_input+1)
+
+        in_words = [[word_label[i]] for i in range(offset, offset+n_input)]
+        in_words = np.reshape(np.array(in_words), [-1, n_input, 1])
+        out_onehot = np.zeros([words_size], dtype=float)
+        out_onehot[word_label[offset+n_input]] = 1.0
+        out_onehot = np.reshape(out_onehot, [1,-1])
+
+        _,acc,lossval,onehot_pred = session.run([optimizer, accuracy, loss, pred], feed_dict={x:in_words, wordy: out_onehot})
+        loss_total += lossval
+        acc_total += acc
+
+        if (step+1) % display_step == 0:
+            print ("iter="+str(step+1)+", average loss="+"{:.6f}".format(loss_total/display_step))
+            acc_total = 0
+            loss_total = 0
+
+        step += 1
+        offset += (n_input+1)
+
 
