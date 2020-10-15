@@ -54,14 +54,13 @@ with tf.Session() as sess:
     #print 'hit_count_ratio=', hit_count_ratio, sess.run(hit_count_ratio)
     #print sess.run(size)
     
-    #print 'ue_raw=',sess.run(ue_raw)
-    print 'res=',sess.run(res)
+    print 'ue_raw=',sess.run(ue_raw)
+    print 'bool_select=', sess.run(bool_select_ue)
+    print 'ue_raw_default_ue=',sess.run(res)
+    #print "default_ue=", sess.run(default_ue)
     #print 'toutiao_dense_uid=', sess.run(toutiao_dense_uid)
 
-
-    print "default_ue=", sess.run(default_ue)
     #print "ue=", sess.run(b)
-
     #print 'non_zero=', type(non_zero), sess.run(non_zero)
     #print "abs_ue=", sess.run(abs_ue)
     #print "default_emb=", sess.run(default_ue)

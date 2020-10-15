@@ -54,9 +54,9 @@ word_label = get_ch_label_v(training_file, word_num_map)
 print word_label
 
 
-#-----------model----------------- 
+#-----------train model----------------- 
 learning_rate = 0.001
-training_epoch = 1000
+training_epoch = 200
 display_step = 60
 n_input = 4
 n_hidden1 = 256
@@ -121,5 +121,24 @@ with tf.Session() as session:
 
         step += 1
         offset += (n_input+1)
+
+    print "finish training"
+    saver.save(session, savedir+"rnnwordtest.ckpt", global_step=step)
+
+    #--------------test model--------------------------
+    prompt = 32
+    sentence = u"生活平凡"
+    input_word = sentence.strip()
+    input_word = get_ch_label_v(None, word_num_map, input_word)
+    for i in range(32):
+        keys = np.reshape(np.array(input_word), [-1,n_input,1])
+        onehot_pred = session.run(pred, feed_dict={x:keys})
+        onehot_pred_index = int(tf.argmax(onehot_pred, 1).eval())
+        #sentence = sentence.decode("utf-8") + words[onehot_pred_index].decode("utf-8")
+        print words[onehot_pred_index].decode("utf-8")
+        #sentence += words[onehot_pred_index] #.decode("utf-8")
+        input_word = input_word[1:]
+        input_word.append(onehot_pred_index)
+    print sentence
 
 
