@@ -114,6 +114,7 @@ def cross_variable_create(column_num):
     b = tf.Variable(tf.random_normal((column_num, 1), mean=0.0, stddev=0.5), dtype=tf.float32)
     return w,b
 
+#x_l+1 = x_0*x_l^T*w_l + b_l + w_l
 def cross_op(x0, x, w, b):
     x0 = tf.expand_dims(x0, axis=2)
     x = tf.expand_dims(x, axis=2)
