@@ -18,3 +18,7 @@ with tf.Session() as sess:
     pylab.imshow(image_batch[0])
     pylab.show()
     coord.request_stop()
+
+
+
+
