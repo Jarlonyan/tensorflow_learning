@@ -22,11 +22,11 @@ hit_count_ratio = tf.divide(tf.cast(non_zero,tf.float32),  tf.cast(batch_size,tf
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    print 'ue_raw=', ue_raw, sess.run(ue_raw)
-    print 'raw_embedding_sum=', raw_embedding_sum, sess.run(raw_embedding_sum)
-    print 'non_zero=', type(non_zero), sess.run(non_zero)
-    print 'batch_size=', type(batch_size), sess.run(batch_size)
-    print 'hit_count_ratio=', hit_count_ratio, sess.run(hit_count_ratio)
+    print ('ue_raw=', ue_raw, sess.run(ue_raw))
+    print ('raw_embedding_sum=', raw_embedding_sum, sess.run(raw_embedding_sum))
+    print ('non_zero=', type(non_zero), sess.run(non_zero))
+    print ('batch_size=', type(batch_size), sess.run(batch_size))
+    print ('hit_count_ratio=', hit_count_ratio, sess.run(hit_count_ratio))
 
 '''
 ue_raw = fc_ue.get_tensor()

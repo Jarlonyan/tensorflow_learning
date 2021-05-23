@@ -50,3 +50,13 @@ class Dice(Layer):
         return self.alpha*(1.0-x_p)*x + x_p * x
 
 
+def attention(querys, keys, keys_len):
+    # querys: [B, H]
+    # keys: [B, T, H]
+    # keys_len: [B]
+    querys_hidden_units = querys.get_shape().as_list()[-1]
+    querys = tf.tile(querys, [1, tf.shape(keys)[1]])
+    querys = tf.reshape(querys, [-1, tf.shape(keys)[1], querys_hidden_units])
+    din_all = tf.concat([querys, keys, querys - keys, querys * keys], axis=-1)
+    d_layer_1_all = tf.layers.dense(din_all, 80, activation=tf.nn.sigmoid, name='f1_att', reuse=tf.AUTO_REUSE)
+    d_layer
