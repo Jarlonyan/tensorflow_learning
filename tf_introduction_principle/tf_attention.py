@@ -103,10 +103,10 @@ def main():
 
         sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()]) 
         #print sess.run(exp_out1)
-        print sess.run(exp_out2)
+        print (sess.run(exp_out2))
         #print sess.run(exp_out3)
         #print sess.run(exp_out4)
-        print sess.run(exp_out5)
+        print (sess.run(exp_out5))
 
 def attention():
     Q = tf.Variable(tf.constant(\
@@ -142,7 +142,7 @@ def attention():
         #print sess.run(attention)
         output = tf.matmul(attention, V)
         output = tf.reduce_mean(output, axis=1)
-        print sess.run(output)
+        print (sess.run(output))
 
 if __name__ == "__main__":
     main() 
