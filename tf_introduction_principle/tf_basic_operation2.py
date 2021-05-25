@@ -38,13 +38,35 @@ def tf_transpose(sess):
     print("a=", sess.run(a))
     print("a.transpose=", sess.run(b))
 
-#5. tf.pack是沿着某个维度pack
+#5. tf.stack是沿着某个维度pack
 def tf_stack(sess):
     t1 = tf.constant([1,4])
     t2 = tf.constant([2,5])
     t3 = tf.constant([3,6])
     a = tf.stack([t1, t2, t3])
+    b = tf.stack([t1, t2, t3], axis=1)
     print("tf.stack([t1,t2,t3])=", sess.run(a))
+    print("tf.stack([t1,t2,t3], axis=1)=", sess.run(b))
+
+#6. tf.unstack将输入的tensor按照指定的行或列进行拆分，并输出含有num个元素的列表
+def tf_unstack(sess):
+    a = tf.constant([[1,2,3], [4,5,6]])
+    b = tf.unstack(a, axis=1)
+    print("b=", sess.run(b))
+    print(b)
+
+#7. tf.reverse沿着维度进行序列反转
+def tf_reverse(sess):
+    a = tf.constant([[1,2,3], [4,5,6]])
+    b = tf.reverse(a, [True, False])
+    print("a=", sess.run(a))
+    print("tf.reverse=", sess.run(b))
+
+#8. tf.gather合并索引indices所指示params中的切片
+def tf_gather(sess):
+    a = tf.constant([1,2,3,4,5])  
+    b = tf.gather(a, [2,0])
+    print("b=", sess.run(b))
 
 def main():
     with tf.Session() as sess:
@@ -52,7 +74,11 @@ def main():
         #tf_split(sess)
         #tf_concat(sess)
         #tf_transpose(sess)
-        tf_stack(sess)
+        #tf_stack(sess)
+        #tf_unstack(sess)
+        #tf_reverse(sess)
+        tf_gather(sess)
+
 
 if __name__ == '__main__':
     main()
