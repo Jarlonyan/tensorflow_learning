@@ -62,11 +62,25 @@ def tf_reverse(sess):
     print("a=", sess.run(a))
     print("tf.reverse=", sess.run(b))
 
-#8. tf.gather合并索引indices所指示params中的切片
+#8. tf.gather根据indices所指示的参数获取tensor中的切片
 def tf_gather(sess):
     a = tf.constant([1,2,3,4,5])  
-    b = tf.gather(a, [2,0])
+    b = tf.gather(a, [2,0,3])
+    c = tf.gather(a, [1,4,2])
+    print("a=", sess.run(a))
     print("b=", sess.run(b))
+    print("c=", sess.run(c))
+
+#9. tf.one_hot生成符合onehot编码的张量
+def tf_onehot(sess):
+    indices = [0,2,-1,1]  #要生成的张量
+    depth = 3             #在depth长度的数组中，哪个索引的值为onehot值
+    on_value = 5.0        #为onehot值时，该值为多少
+    off_value = 0.0       #非onehot值时，该值为多少
+    axis = -1             #axis=-1时，生成的shape=[indices长度,depth]。axis=0时，shape=[depth,indices长度]
+    a = tf.one_hot(indices, depth, on_value, off_value, axis)
+    print("a=", sess.run(a))
+
 
 def main():
     with tf.Session() as sess:
@@ -77,7 +91,8 @@ def main():
         #tf_stack(sess)
         #tf_unstack(sess)
         #tf_reverse(sess)
-        tf_gather(sess)
+        #tf_gather(sess)
+        tf_onehot(sess)
 
 
 if __name__ == '__main__':
