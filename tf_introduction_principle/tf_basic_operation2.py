@@ -1,7 +1,7 @@
 #coding=utf-8
 import numpy as np
-#import tensorflow as tf
 
+#import tensorflow as tf
 import tensorflow.compat.v1 as tf #在tensorflow2的环境下使用tensorflow1.x
 tf.disable_v2_behavior()
 
