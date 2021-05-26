@@ -75,7 +75,7 @@ def tf_gather(sess):
 def tf_onehot(sess):
     indices = [0,2,-1,1]  #要生成的张量
     depth = 3             #在depth长度的数组中，哪个索引的值为onehot值
-    on_value = 5.0        #为onehot值时，该值为多少
+    on_value = 1.0        #为onehot值时，该值为多少
     off_value = 0.0       #非onehot值时，该值为多少
     axis = -1             #axis=-1时，生成的shape=[indices长度,depth]。axis=0时，shape=[depth,indices长度]
     a = tf.one_hot(indices, depth, on_value, off_value, axis)
