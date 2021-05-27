@@ -35,8 +35,8 @@ def tf_concat(sess):
 def tf_transpose(sess):
     a = tf.constant([[1,2,3], [4,5,6]])
     b = tf.transpose(a, perm=[1,0])
-    print("a=", sess.run(a))
-    print("a.transpose=", sess.run(b))
+    print("a=\n", sess.run(a))
+    print("tf.transpose(a,perm=[1,0])=", sess.run(b))
 
 #5. tf.stack是沿着某个维度pack
 def tf_stack(sess):
@@ -45,31 +45,30 @@ def tf_stack(sess):
     t3 = tf.constant([3,6])
     a = tf.stack([t1, t2, t3])
     b = tf.stack([t1, t2, t3], axis=1)
-    print("tf.stack([t1,t2,t3])=", sess.run(a))
-    print("tf.stack([t1,t2,t3], axis=1)=", sess.run(b))
+    print("tf.stack([t1,t2,t3])=\n", sess.run(a))
+    print("tf.stack([t1,t2,t3], axis=1)=\n", sess.run(b))
 
 #6. tf.unstack将输入的tensor按照指定的行或列进行拆分，并输出含有num个元素的列表
 def tf_unstack(sess):
     a = tf.constant([[1,2,3], [4,5,6]])
     b = tf.unstack(a, axis=1)
-    print("b=", sess.run(b))
-    print(b)
+    print("b=\n", sess.run(b))
 
 #7. tf.reverse沿着维度进行序列反转
 def tf_reverse(sess):
     a = tf.constant([[1,2,3], [4,5,6]])
     b = tf.reverse(a, [True, False])
-    print("a=", sess.run(a))
-    print("tf.reverse=", sess.run(b))
+    print("a=\n", sess.run(a))
+    print("tf.reverse(a,[True,False])=\n", sess.run(b))
 
 #8. tf.gather根据indices所指示的参数获取tensor中的切片
 def tf_gather(sess):
     a = tf.constant([1,2,3,4,5])  
     b = tf.gather(a, [2,0,3])
     c = tf.gather(a, [1,4,2])
-    print("a=", sess.run(a))
-    print("b=", sess.run(b))
-    print("c=", sess.run(c))
+    print("a=\n", sess.run(a))
+    print("tf.gather(a,[2,0,3])=\n", sess.run(b))
+    print("tf.gather(a,[1,4,2])=\n", sess.run(c))
 
 #9. tf.one_hot生成符合onehot编码的张量
 def tf_onehot(sess):
@@ -79,7 +78,8 @@ def tf_onehot(sess):
     off_value = 0.0       #非onehot值时，该值为多少
     axis = -1             #axis=-1时，生成的shape=[indices长度,depth]。axis=0时，shape=[depth,indices长度]
     a = tf.one_hot(indices, depth, on_value, off_value, axis)
-    print("a=", sess.run(a))
+    print("indices=", indices)
+    print("tf.one_hot(indices, ...)=\n", sess.run(a))
 
 
 def main():
