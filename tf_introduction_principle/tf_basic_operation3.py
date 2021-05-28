@@ -25,14 +25,14 @@ def tf_multiply(sess):
 
 def tf_funcs(sess):
     a = tf.eye(5, 5, dtype=tf.int32)
-    print("a=\n", sess.run(a))
+    print("tf.eye=\n", sess.run(a))
 
 def main():
     with tf.Session() as sess:
-        #tf_diag_part(sess)
+        tf_diag_part(sess)
         #tf_matmul(sess)
         #tf_multiply(sess)
-        tf_funcs(sess)
+        #tf_funcs(sess)
 
 
 if __name__ == '__main__':

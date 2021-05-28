@@ -10,7 +10,6 @@ def tf_reshape(sess):
     a = tf.constant([1,2,3,4,5,6,7,8,9])
     t1 = tf.reshape(a, [3,3])
     t2 = tf.reshape(a, [1,-1]) #-1表示该维度下按照原有维度自动计算
-
     print("t1=\n", sess.run(t1))
     print("t2=\n", sess.run(t2))
 
@@ -36,14 +35,14 @@ def tf_squeeze(sess):
     print ("a.shape=", a.shape)
     print ("b.shape=", b.shape)
     print ("a=\n", sess.run(a))
-    print ("b=\n", sess.run(b))
+    print ("tf.squeeze(a)=\n", sess.run(b))
 
 #4. tf.tile是平铺的意思，用于在同一维度上的复制. tf.tile(input, multiples, name=None) input是输入，multiples是同一维度上复制的次数
 def tf_tile(sess):
     a = tf.constant([[1,2], [3,4]], name="a")
     b = tf.tile(a, [3,1])
     print("a=\n", sess.run(a))
-    print("b=\n", sess.run(b))
+    print("tf.tile(a,[3,1])=\n", sess.run(b))
 
 #5. tf.split对value张量沿着axis维度，按照num_or_size_splits个数切分
 def tf_split(sess):
