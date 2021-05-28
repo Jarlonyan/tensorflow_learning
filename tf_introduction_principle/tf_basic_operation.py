@@ -5,6 +5,12 @@ import numpy as np
 import tensorflow.compat.v1 as tf #在tensorflow2的环境下使用tensorflow1.x
 tf.disable_v2_behavior()
 
+'''
+1                  #维度为0的标量
+[1, 2, 3]          #维度为1，包含3个元素. 注意shape=(3,)，而不是(3)。在python中tuple必须带有一个逗号
+[[1, 2], [3, 4]]   #维度为2， shape=(2, 2)
+'''
+
 #1. tf.reshape对tensor按照指定形状进行变化
 def tf_reshape(sess):
     a = tf.constant([1,2,3,4,5,6,7,8,9])

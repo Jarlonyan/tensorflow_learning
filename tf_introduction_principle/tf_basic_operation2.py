@@ -36,28 +36,29 @@ def tf_concat(sess):
 
 #4. tf.transpose调换tensor的维度顺序，其实就是矩阵转置
 def tf_transpose(sess):
-    a = tf.constant([[1,2,3], [4,5,6]])
+    a = tf.constant([[1,2,3], [4,5,6]]) #shape=(2,3)
     b = tf.transpose(a, perm=[1,0])
     print("a=\n", sess.run(a))
     print("tf.transpose(a,perm=[1,0])=\n", sess.run(b))
 
 #5. tf.stack是沿着某个维度pack
 def tf_stack(sess):
-    t1 = tf.constant([1,4])
-    t2 = tf.constant([2,5])
-    t3 = tf.constant([3,6])
+    t1 = tf.constant([1,4]) #shape=(2,)
+    t2 = tf.constant([2,5]) #shape=(2,)
+    t3 = tf.constant([3,6]) #shape=(2,)
     a = tf.stack([t1, t2, t3])
     b = tf.stack([t1, t2, t3], axis=1)
+    print("t1.shape=", t1.shape)
     print("t1=", sess.run(t1))
     print("t2=", sess.run(t2))
     print("t3=", sess.run(t3))
-    print("tf.stack([t1,t2,t3])=\n", sess.run(a))
-    print("tf.stack([t1,t2,t3], axis=1)=\n", sess.run(b))
+    print("tf.stack([t1,t2,t3])=\n", sess.run(a))         #shape=(3,2)
+    print("tf.stack([t1,t2,t3], axis=1)=\n", sess.run(b)) #shape=(2,3)
 
 #6. tf.unstack将输入的tensor按照指定的行或列进行拆分，并输出含有num个tensor的list
 def tf_unstack(sess):
-    a = tf.constant([[1,2,3], [4,5,6]])
-    b = tf.unstack(a, axis=1)
+    a = tf.constant([[1,2,3], [4,5,6]]) #shape=(2,3)
+    b = tf.unstack(a, axis=1)  #所以拆分后有3个tensor
     print("a=\n", sess.run(a))
     print("tf.unstack(a,axis=1)(type=",type(b),")=>\n", b)
     for x in b:
@@ -93,11 +94,11 @@ def tf_onehot(sess):
 
 def main():
     with tf.Session() as sess:
-        tf_slice(sess)
+        #tf_slice(sess)
         #tf_split(sess)
         #tf_concat(sess)
         #tf_transpose(sess)
-        #tf_stack(sess)
+        tf_stack(sess)
         #tf_unstack(sess)
         #tf_reverse(sess)
         #tf_gather(sess)
