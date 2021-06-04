@@ -35,10 +35,12 @@ def tf_softmax_loss(sess):
     print("res1.shape=", res1.shape)
 
 def tf_equal(sess):
-    a = tf.constant([[1,3,4,5,6]])
+    a = tf.constant([[3,3,4,1,2]])
     b = tf.constant([[1,3,4,3,2]])
-    c = tf.equal(a, b)
-    print("tf_equal=", sess.run(c))
+    #c = tf.equal(a, b)
+    c = tf.equal(a, tf.transpose(a))
+    print("a=\n", sess.run(a))
+    print("tf_equal=\n", sess.run(tf.cast(c, dtype=tf.int32)))
 
 def main():
     with tf.Session() as sess:
