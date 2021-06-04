@@ -23,17 +23,31 @@ def tf_multiply(sess):
     c = tf.multiply(a, b)
     print("c=\n", sess.run(c))
 
-def tf_funcs(sess):
+def tf_eye(sess):
     a = tf.eye(5, 5, dtype=tf.int32)
     print("tf.eye=\n", sess.run(a))
 
+def tf_softmax_loss(sess):
+    labels = [[0,0,1], [0,1,0]]  #one-hot
+    logits = [[2,0.5,6], [0.1,0,3]]
+
+    res1 = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+    print("res1.shape=", res1.shape)
+
+def tf_equal(sess):
+    a = tf.constant([[1,3,4,5,6]])
+    b = tf.constant([[1,3,4,3,2]])
+    c = tf.equal(a, b)
+    print("tf_equal=", sess.run(c))
+
 def main():
     with tf.Session() as sess:
-        tf_diag_part(sess)
+        #tf_diag_part(sess)
         #tf_matmul(sess)
         #tf_multiply(sess)
-        #tf_funcs(sess)
-
+        #tf_eye(sess)
+        #tf_softmax_loss(sess)
+        tf_equal(sess)
 
 if __name__ == '__main__':
     main()
