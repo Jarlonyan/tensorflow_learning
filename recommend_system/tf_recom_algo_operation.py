@@ -7,28 +7,26 @@ tf.disable_v2_behavior()
 
 embed_size = 5
 
-def embeddings(sess):
-    slot1_embed_table = tf.get_variable(name='multi_hot_embeds', shape=(100, embed_size), initializer=tf.glorot_uniform_initializer())
+def embeddings(sess, slot_id):
+    slotx_emb_table = tf.get_variable(name='multi_hot_embeds_slot_%s'%str(slot_id), shape=(100, embed_size), initializer=tf.glorot_uniform_initializer())
     #print("embeds=\n", sess.run(embeds))
 
 
-    #slot1_index = tf.placeholder(dtype=tf.int64, shape=[None, 2])
-    #slot1_value = tf.placeholder(dtype=tf.int64, shape=[None])
-    slot1_index = tf.constant([[1,1], [2,2], [3,3]], dtype=tf.int64)
-    slot1_value = tf.constant([3,1,2], dtype=tf.int64)
+    #slotx_index = tf.placeholder(dtype=tf.int64, shape=[None, 2])
+    #slotx_value = tf.placeholder(dtype=tf.int64, shape=[None])
+    slotx_index = tf.constant([[1,1], [2,2], [3,3]], dtype=tf.int64)
+    slotx_value = tf.constant([3,1,2], dtype=tf.int64)
 
-    print(slot1_embed_table.shape)
-    print(slot1_index.shape)
-    print(slot1_value.shape)
+    print(slotx_emb_table.shape)
+    print(slotx_index.shape)
+    print(slotx_value.shape)
 
-    slot1_embed = tf.nn.embedding_lookup_sparse(
-                    slot1_embed_table, 
-                    tf.SparseTensor(indices=slot1_index, values=slot1_value, dense_shape=(3, embed_size)),
+    slotx_embed = tf.nn.embedding_lookup_sparse(
+                    slotx_emb_table, 
+                    tf.SparseTensor(indices=slotx_index, values=slotx_value, dense_shape=(3, embed_size)),
                     None,
                     combiner="sum")
-
-    sess.run(tf.global_variables_initializer())
-    print("embeds=\n", sess.run(slot1_embed))
+    return slotx_embed
 
 def get_senet_weights(embeddings):
     slots_num = len(embeddings)
@@ -36,17 +34,26 @@ def get_senet_weights(embeddings):
     for embed in embeddings:
         inputs.append(tf.reduce_mean(embed, axis=1, keepdims=True))
     sequeeze_embedding = tf.concat(inputs, axis=1)
-    print(sequeeze_embedding.shape)
+    print("sequeeze_embedding.shape=",sequeeze_embedding.shape)
 
-    weight_out = modules.DenseTower(name='senet_layer', output_dims=[32, slots_num],
-                                    initializers=initializers.GlorotNormal(mode='fan_avg'),
-                                    activations=[layers.Relu(), layers.Sigmoid()])(sequeeze_embedding)
-    return tf.split(weight_out, slots_num, axis=1)
+    sequeeze_embedding = tf.layers.dense(inputs=sequeeze_embedding, units=32, activation=tf.nn.relu)
+    weight_out = tf.layers.dense(inputs=sequeeze_embedding, units=2, activation=tf.nn.relu)    
+    return tf.split(weight_out, 2, axis=1)
 
 
 def main():
     with tf.Session() as sess:
-        embeddings(sess)
+        emb_slot1 = embeddings(sess, 1)
+        emb_slot2 = embeddings(sess, 2)
+        
+        sess.run(tf.global_variables_initializer())
+        print("emb_slot1=\n", sess.run(emb_slot1))
+        print("emb_slot2=\n", sess.run(emb_slot2))
+        
+        res = get_senet_weights([emb_slot1, emb_slot2])
+        print("res0=\n", res[0])
+        print("res1=\n", res[1])
+
 
 if __name__ == '__main__':
     main()
