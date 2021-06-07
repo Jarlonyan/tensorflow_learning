@@ -34,8 +34,9 @@ def tf_softmax_loss(sess):
     res1 = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
     print("res1.shape=", res1.shape)
 
+#tf.equal: 对比这两个tensor相等的元素，相等则返回True，否则返回False
 def tf_equal(sess):
-    a = tf.constant([[3,3,4,1,2]])
+    a = tf.constant([[3,3,4,1,2,2]])
     b = tf.constant([[1,3,4,3,2]])
     #c = tf.equal(a, b)
     c = tf.equal(a, tf.transpose(a))
