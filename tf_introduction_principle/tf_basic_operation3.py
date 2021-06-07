@@ -37,9 +37,9 @@ def tf_softmax_loss(sess):
 #tf.equal: 对比这两个tensor相等的元素，相等则返回True，否则返回False
 def tf_equal(sess):
     a = tf.constant([[3,3,4,1,2,2]])
-    b = tf.constant([[1,3,4,3,2]])
+    b = tf.constant([[1,3,4,3,2,5]])
     #c = tf.equal(a, b)
-    c = tf.equal(a, tf.transpose(a))
+    c = tf.equal(a, tf.transpose(a)) #inbatch_softmax修复有这个代码
     print("a=\n", sess.run(a))
     print("tf_equal=\n", sess.run(tf.cast(c, dtype=tf.int32)))
 
