@@ -43,10 +43,10 @@ def tf_equal(sess):
     print("tf.equal(a,b)=\n", sess.run(tf.cast(c, dtype=tf.int32)))
 
     #高级用法
-    a = tf.constant([[3],[3],[4],[1],[2],[2]])
-    c = tf.equal(a, tf.transpose(a)) #inbatch_softmax修复有这个代码
-    print("a=\n", sess.run(a))
-    print("tf_equal=\n", sess.run(tf.cast(c, dtype=tf.int32)))
+    x = tf.constant([[3],[3],[4],[1],[2],[2]])
+    z = tf.equal(x, tf.transpose(x)) #inbatch_softmax修复有这个代码
+    print("x=\n", sess.run(x))
+    print("tf.equal(x, x.T)=\n", sess.run(tf.cast(z, dtype=tf.int32)))
 
 def main():
     with tf.Session() as sess:
