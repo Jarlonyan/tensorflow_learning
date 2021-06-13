@@ -19,23 +19,20 @@ def onehot_embedding(sess, slot_id):
     return slotx_embed 
 
 def multihot_embedding(sess, slot_id):
-    slotx_emb_table = tf.get_variable(name='multi_hot_embeds_slot_%s'%str(slot_id), shape=(g_dict_len, g_embed_size), initializer=tf.glorot_uniform_initializer())
+    #slotx_emb_table = tf.get_variable(name='multi_hot_embeds_slot_%s'%str(slot_id), shape=(g_dict_len, g_embed_size), initializer=tf.glorot_uniform_initializer())
+    slotx_emb_table = tf.constant([[6.4, 1.2, 0.5, 3.3, 2.0],
+                                   [0.3, 0.4, 0.5, 0.8, 3.2],
+                                   [1.5, 0.3, 2.2, 1.9, 5.1],
+                                   [0.4, 0.9, 1.1, 4.3, 3.4]])
     #print("embeds=\n", sess.run(embeds))
 
     #slotx_index = tf.placeholder(dtype=tf.int64, shape=[None, 2])
     #slotx_value = tf.placeholder(dtype=tf.int64, shape=[None])
-    slotx_index = tf.constant([[2,1], [2,2], [2,3]], dtype=tf.int64)
-    slotx_value = tf.constant([1,0,2], dtype=tf.int64)
+    slotx_idx = tf.SparseTensor(indices=[[0,0], [0,1], [1,1]], values=[0,1,2], dense_shape=(3, 5))  #定义稀疏矩阵
 
     print(slotx_emb_table.shape)
-    print(slotx_index.shape)
-    print(slotx_value.shape)
 
-    slotx_embed = tf.nn.embedding_lookup_sparse(
-                    slotx_emb_table, 
-                    tf.SparseTensor(indices=slotx_index, values=slotx_value, dense_shape=(3, g_embed_size)),
-                    None,
-                    combiner="sum")
+    slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, None, combiner="sum")
     
     sess.run(tf.global_variables_initializer())
     print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
@@ -62,6 +59,8 @@ def main():
     with tf.Graph().as_default():
         with tf.Session() as sess:
             emb_slot1 = multihot_embedding(sess, 1)
+            """
+            emb_slot1 = multihot_embedding(sess, 1)
             emb_slot2 = multihot_embedding(sess, 2)
             t0, t1 = get_senet_weights(sess, [emb_slot1, emb_slot2])
             sess.run(tf.global_variables_initializer())
@@ -69,7 +68,7 @@ def main():
             print("emb_slot2=\n", sess.run(emb_slot2))        
             print("t0=\n", sess.run(t0))
             print("t1=\n", sess.run(t1))
-            
+            """
             #emb_slot3 = onehot_embedding(sess, 3)
             
         #end-with
