@@ -68,12 +68,12 @@ def lhuc_net(sess, lhuc_inputs, lhuc_dims, scale_last=False):
     for idx,dim in enumerate(mlp_dims[:-1]):
         sess.run(tf.global_variables_initializer())
         lhuc_output = mlp(sess, lhuc_inputs, lhuc_dims+[int(cur_layer.shape[1])])
-        lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
+        lhuc_scale = 1.000 + 5.000 * tf.nn.tanh(0.200 * lhuc_output)
         cur_layer = mlp(sess, cur_layer*lhuc_scale, [dim])
 
     if scale_last:
-        lhuc_output = mlp(lhuc_inputs, lhuc_dims+[nn_dims[-1]])
-        lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
+        lhuc_output = mlp(lhuc_inputs, lhuc_dims+[mlp_dims[-1]])
+        lhuc_scale = 1.000 + 5.000 * tf.nn.tanh(0.200 * lhuc_output)
         cur_layer = cur_layer * lhuc_scale
 
     cur_layer = mlp(sess, cur_layer, [mlp_dims[-1]])
