@@ -57,14 +57,14 @@ def multihot_attention_embedding(sess, slot_id, batch_ids, item_emb):
     slotx_emb_table = tf.get_variable(name='multi_hot_atten_embeds_slot_%s'%str(slot_id), shape=(g_dict_len, g_emb_size), initializer=tf.glorot_uniform_initializer())
     sess.run(tf.global_variables_initializer())
     batch_emb = []
-    Q = item_emb
-    for ids in batch_ids:
-        inds = tf.constant(ids, dtype=tf.int64)
-        V = tf.nn.embedding_lookup(slotx_emb_table, inds)
-        res = attention_func(Q, V, V)
+    item_emb_list = tf.split(item_emb, 3, axis=0) #item_emb是batch的，先拆分开来
+    for (ids,Q) in zip(batch_ids, item_emb_list):
+        ids = tf.constant(ids, dtype=tf.int64)
+        V = tf.nn.embedding_lookup(slotx_emb_table, ids) #V.shape=m*d, m是这个样本的这个slot是m-hot，d是emb维度
+        res = attention_func(Q, V, V)      #Q.shape=1*d, d是emb维度
         batch_emb.append(res)
         #print("res=", sess.run(V))
-    slot_emb =  tf.stack(batch_emb, axis=0)
+    slot_emb = tf.stack(batch_emb, axis=0)
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slot_emb))
     return slot_emb
 
