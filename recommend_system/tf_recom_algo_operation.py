@@ -48,34 +48,35 @@ def SENet(sess, embed_matrix, field_size, emb_size, ratio):
     z = tf.reduce_mean(embed_matrix, axis=2)  # bs*field*emb_size  ->  bs*field
     z1 = tf.layers.dense(z, units=field_size/ratio, activation='relu')
     w = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field
+    sess.run(tf.global_variables_initializer()) #使用过tf.layers.dense的后面，要初始化
     #print("debug_senet, z.shape=", z.shape, ", z1.shape=", z1.shape, ", a.shape=", a.shape)
-    sess.run(tf.global_variables_initializer())
     senet_embed = tf.multiply(embed_matrix, tf.expand_dims(w, axis=-1))   #(bs*field*emb) * (bs*field*1)
     return senet_embed, w
 
-def mlp(mlp_input, mlp_dims):
+def mlp(sess, mlp_input, mlp_dims):
     x = mlp_input
-    if len(mlp_dims) == 1:
-        return tf.layers.dense(x, units=mlp_dims[-1], activation=None)
-    for idx,dim in mlp_dims[-1]:
-        x = tf.layers.dense(x, units=dim, activation='relu')
-    return tf.layers.dense(x, units=mlp_dims[-1], activation=None)
+    if len(mlp_dims) > 1:
+        for idx,dim in enumerate(mlp_dims[0:-1]):
+            x = tf.layers.dense(x, units=dim, activation='relu')
+    x = tf.layers.dense(x, units=mlp_dims[-1], activation=None)
+    sess.run(tf.global_variables_initializer())
+    return x
 
-def lhuc_net(name, nn_inputs, lhuc_dims, lhuc_inputs, scale_last):
+def lhuc_net(sess, lhuc_inputs, lhuc_dims, scale_last=False):
     mlp_dims = [256, 256, 128, 64]
-    cur_layer = nn_inputs
+    cur_layer = lhuc_inputs
     for idx,dim in enumerate(mlp_dims[:-1]):
-        lhuc_tower_name = 'ctr_lhuc_{}'.format(idx)
-        lhuc_output = mlp(lhuc_input, lhuc_dims+[int(cur_layer.shape[1])])
+        sess.run(tf.global_variables_initializer())
+        lhuc_output = mlp(sess, lhuc_inputs, lhuc_dims+[int(cur_layer.shape[1])])
         lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
-        cur_layer = mlp(cur_layer*luhc_scale, [dim])
+        cur_layer = mlp(sess, cur_layer*lhuc_scale, [dim])
 
     if scale_last:
-        lhuc_output = mlp(lhuc_input, lhuc_dims+[nn_dims[-1]])
+        lhuc_output = mlp(lhuc_inputs, lhuc_dims+[nn_dims[-1]])
         lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
         cur_layer = cur_layer * lhuc_scale
 
-    cur_layer = mlp(cur_layer, [mlp_dims[-1]])
+    cur_layer = mlp(sess, cur_layer, [mlp_dims[-1]])
     return cur_layer
 
 
@@ -85,15 +86,21 @@ def main():
             emb_slot1 = onehot_embedding(sess, 1)
             emb_slot2 = multihot_embedding(sess, 2)
 
-
+            '''
             #SENet
             x = tf.stack([emb_slot1, emb_slot2], axis=1)
             senet_embed_matrix, f_weight = SENet(sess, x, 2, g_emb_size, 0.2) #2表示有2个slot
             print('senet_emb=\n', sess.run(senet_embed_matrix))
             print('f_weight=\n', sess.run(f_weight))
+            '''
 
+            #'''
             #LHUC
-            
+            lhuc_inputs = tf.concat([emb_slot1, emb_slot2], axis=1)
+            lhuc_dims = [256, 256, 128, 64]
+            lhuc_output = lhuc_net(sess, lhuc_inputs, lhuc_dims, False)
+            print("lhuc_output=\n", sess.run(lhuc_output))
+            #'''
 
         #end-with
     #end-with
