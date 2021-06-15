@@ -19,24 +19,25 @@ def onehot_embedding(sess, slot_id):
     return slotx_embed 
 
 def multihot_embedding(sess, slot_id):
-    #slotx_emb_table = tf.get_variable(name='multi_hot_embeds_slot_%s'%str(slot_id), shape=(g_dict_len, g_emb_size), initializer=tf.glorot_uniform_initializer())
-    slotx_emb_table = tf.constant([[6.4, 1.2, 0.5, 3.3],
+    slotx_emb_table = tf.get_variable(name='multi_hot_embeds_slot_%s'%str(slot_id), shape=(g_dict_len, g_emb_size), initializer=tf.glorot_uniform_initializer())
+    '''slotx_emb_table = tf.constant([[6.4, 1.2, 0.5, 3.3],
                                    [0.3, 0.4, 0.5, 0.8],
                                    [1.5, 0.3, 2.2, 1.9],
                                    [0.4, 0.9, 1.1, 4.3]])
-    #print("embeds=\n", sess.run(embeds))
+    '''
 
-    #index = tf.placeholder(dtype=tf.int64, shape=[None, 2])
-    #value = tf.placeholder(dtype=tf.int64, shape=[None])
-
-    #定义稀疏矩阵, indices是位置[0,0]表示矩阵的第0行第0列，这样拼出来稀疏矩阵. values是对应emb_table中的索引，dense_shape中的3是batch_size
-    slotx_idx = tf.SparseTensor(indices=[[0,0], [1,1], [2,1]], values=[2,1,3], dense_shape=(3, g_emb_size))
+    #定义稀疏矩阵, indices是位置[0,0]表示矩阵的第0行第0列，这样拼出来稀疏矩阵. values是对应emb_table中的索引。dense_shape是稀疏矩阵的长*宽
+    #这个稀疏矩阵就是下面这个样子，每一行是一个multihot，行数代表batch_size，列数代表multihot最多允许多少个hot。N表示稀疏矩阵这位置没有存
+    #[[1, 2, 3, N, N],
+    # [N, N, 2, N, N],
+    # [N, N, 3, 1, N]]
+    slotx_idx = tf.SparseTensor(indices=[[0,0], [0,1], [0,2], [1,2], [2,2], [2,3]], values=[1,2,3,2,3,1], dense_shape=(10, 5))
 
     print(slotx_emb_table.shape)
 
-    slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, None, combiner="sum")
+    slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, sp_weights=None, combiner="sum") #combiner=sum表示multihot用sum方式聚合
     #slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, None, combiner=None)
-    
+
     sess.run(tf.global_variables_initializer())
     print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_embed))
