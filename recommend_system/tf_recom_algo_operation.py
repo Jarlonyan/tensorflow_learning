@@ -34,11 +34,9 @@ def multihot_embedding(sess, slot_id):
     # [N, N, 2, N, N],
     # [N, N, 3, 1, N]]
     slotx_idx = tf.SparseTensor(indices=[[0,0], [0,1], [0,2], [1,2], [2,2], [2,3]], values=[1,2,3,2,3,1], dense_shape=(10, 5))
-
-    print(slotx_emb_table.shape)
+    print("slotx_emb_table.shape=",slotx_emb_table.shape)
 
     slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, sp_weights=None, combiner="sum") #combiner=sum表示multihot用sum方式聚合
-    #slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, None, combiner=None)
 
     sess.run(tf.global_variables_initializer())
     #print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
