@@ -47,54 +47,36 @@ def multihot_embedding(sess, slot_id):
 def SENet(sess, embed_matrix, field_size, emb_size, ratio):
     z = tf.reduce_mean(embed_matrix, axis=2)  # bs*field*emb_size  ->  bs*field
     z1 = tf.layers.dense(z, units=field_size/ratio, activation='relu')
-    a = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field
-    b = tf.expand_dims(a, axis=-1)
-    #print("debug_senet, z.shape=", z.shape, ", z1.shape=", z1.shape, ", a.shape=", a.shape, ", b.shape=", b.shape)
+    w = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field
+    #print("debug_senet, z.shape=", z.shape, ", z1.shape=", z1.shape, ", a.shape=", a.shape)
     sess.run(tf.global_variables_initializer())
-    senet_embed = tf.multiply(embed_matrix, tf.expand_dims(a, axis=-1))   #(bs*field*emb) * (bs*field*1)
-    return senet_embed, a
+    senet_embed = tf.multiply(embed_matrix, tf.expand_dims(w, axis=-1))   #(bs*field*emb) * (bs*field*1)
+    return senet_embed, w
 
 def mlp(mlp_input, mlp_dims):
-    from tensorflow import keras
-    from tensorflow.keras import layers
-    
-'''
-def lhuc_net(name, mlp_dims, nn_inputs, lhuc_dims, lhuc_inputs, scale_last):
+    x = mlp_input
+    if len(mlp_dims) == 1:
+        return tf.layers.dense(x, units=mlp_dims[-1], activation=None)
+    for idx,dim in mlp_dims[-1]:
+        x = tf.layers.dense(x, units=dim, activation='relu')
+    return tf.layers.dense(x, units=mlp_dims[-1], activation=None)
+
+def lhuc_net(name, nn_inputs, lhuc_dims, lhuc_inputs, scale_last):
     mlp_dims = [256, 256, 128, 64]
     cur_layer = nn_inputs
     for idx,dim in enumerate(mlp_dims[:-1]):
         lhuc_tower_name = 'ctr_lhuc_{}'.format(idx)
         lhuc_output = mlp(lhuc_input, lhuc_dims+[int(cur_layer.shape[1])])
+        lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
+        cur_layer = mlp(cur_layer*luhc_scale, [dim])
 
-    
-        lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
-        tf.summary.histogram('{}_scale'.format(lhuc_tower_name), lhuc_scale)
-        cur_layer = modules.DenseTower(name='{}_layer_{}'.format(name, idx),
-                        output_dims=[nn_dim],
-                        initializers=nn_initializers[idx],
-                        activations=[nn_activations[idx]], # fatal
-                        )(cur_layer * lhuc_scale)
     if scale_last:
-        lhuc_tower_name = '{}_lhuc_{}'.format(name, len(nn_dims))
-        lhuc_output = modules.DenseTower(name=lhuc_tower_name,
-                        output_dims=lhuc_dims+[nn_dims[-1]],
-                        # activations=[layers.Relu()] * len(lhuc_dims) + [layers.Sigmoid()],
-                        activations=layers.Relu(),
-                        initializers=initializers.GlorotNormal(mode='fan_in'),
-                        )(lhuc_final_input)
-        tf.summary.histogram('{}_output'.format(lhuc_tower_name), lhuc_output)
+        lhuc_output = mlp(lhuc_input, lhuc_dims+[nn_dims[-1]])
         lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
-        tf.summary.histogram('{}_scale'.format(lhuc_tower_name), lhuc_scale)
         cur_layer = cur_layer * lhuc_scale
 
-    cur_layer = modules.DenseTower(name='{}_layer_output'.format(name),
-                        output_dims=[nn_dims[-1]],
-                        initializers=nn_initializers[-1],
-                        activations=[nn_activations[-1]], # fatal
-                        )(cur_layer)
-    
+    cur_layer = mlp(cur_layer, [mlp_dims[-1]])
     return cur_layer
-'''
 
 
 def main():
@@ -106,7 +88,7 @@ def main():
 
             #SENet
             x = tf.stack([emb_slot1, emb_slot2], axis=1)
-            senet_embed_matrix, f_weight = SENet(sess, x, 2, g_emb_size, 0.2)
+            senet_embed_matrix, f_weight = SENet(sess, x, 2, g_emb_size, 0.2) #2表示有2个slot
             print('senet_emb=\n', sess.run(senet_embed_matrix))
             print('f_weight=\n', sess.run(f_weight))
 
