@@ -14,7 +14,7 @@ def onehot_embedding(sess, slot_id):
     slotx_index = tf.constant([2,1,3], dtype=tf.int64)
     slotx_embed = tf.reshape(tf.nn.embedding_lookup(slotx_emb_table, slotx_index), shape=[-1, g_emb_size])
     sess.run(tf.global_variables_initializer())
-    print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
+    #print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_embed))
     return slotx_embed 
 
@@ -39,42 +39,79 @@ def multihot_embedding(sess, slot_id):
     #slotx_embed = tf.nn.embedding_lookup_sparse(slotx_emb_table, slotx_idx, None, combiner=None)
 
     sess.run(tf.global_variables_initializer())
-    print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
+    #print("emb_table(slot"+str(slot_id)+")=\n", sess.run(slotx_emb_table))
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_embed))
     return slotx_embed
 
-def get_senet_weights(sess, embeddings):
-    slots_num = len(embeddings)
-    inputs = []
-    for embed in embeddings:
-        inputs.append(tf.reduce_mean(embed, axis=1, keepdims=True))
-    sequeeze_embedding = tf.concat(inputs, axis=1)
-    #print("sequeeze_embedding.shape=",sequeeze_embedding.shape)
 
-    sequeeze_embedding = tf.layers.dense(inputs=sequeeze_embedding, units=32, activation=tf.nn.relu)
-    weight_out = tf.layers.dense(inputs=sequeeze_embedding, units=2, activation=tf.nn.relu)    
-
+def SENet(sess, embed_matrix, field_size, emb_size, ratio):
+    z = tf.reduce_mean(embed_matrix, axis=2)  # bs*field*emb_size  ->  bs*field
+    z1 = tf.layers.dense(z, units=field_size/ratio, activation='relu')
+    a = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field
+    b = tf.expand_dims(a, axis=-1)
+    #print("debug_senet, z.shape=", z.shape, ", z1.shape=", z1.shape, ", a.shape=", a.shape, ", b.shape=", b.shape)
     sess.run(tf.global_variables_initializer())
-    print("weight_out=\n", sess.run(weight_out))
+    senet_embed = tf.multiply(embed_matrix, tf.expand_dims(a, axis=-1))   #(bs*field*emb) * (bs*field*1)
+    return senet_embed, a
 
-    return tf.split(weight_out, 2, axis=1)
+def mlp(mlp_input, mlp_dims):
+    from tensorflow import keras
+    from tensorflow.keras import layers
+    
+'''
+def lhuc_net(name, mlp_dims, nn_inputs, lhuc_dims, lhuc_inputs, scale_last):
+    mlp_dims = [256, 256, 128, 64]
+    cur_layer = nn_inputs
+    for idx,dim in enumerate(mlp_dims[:-1]):
+        lhuc_tower_name = 'ctr_lhuc_{}'.format(idx)
+        lhuc_output = mlp(lhuc_input, lhuc_dims+[int(cur_layer.shape[1])])
+
+    
+        lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
+        tf.summary.histogram('{}_scale'.format(lhuc_tower_name), lhuc_scale)
+        cur_layer = modules.DenseTower(name='{}_layer_{}'.format(name, idx),
+                        output_dims=[nn_dim],
+                        initializers=nn_initializers[idx],
+                        activations=[nn_activations[idx]], # fatal
+                        )(cur_layer * lhuc_scale)
+    if scale_last:
+        lhuc_tower_name = '{}_lhuc_{}'.format(name, len(nn_dims))
+        lhuc_output = modules.DenseTower(name=lhuc_tower_name,
+                        output_dims=lhuc_dims+[nn_dims[-1]],
+                        # activations=[layers.Relu()] * len(lhuc_dims) + [layers.Sigmoid()],
+                        activations=layers.Relu(),
+                        initializers=initializers.GlorotNormal(mode='fan_in'),
+                        )(lhuc_final_input)
+        tf.summary.histogram('{}_output'.format(lhuc_tower_name), lhuc_output)
+        lhuc_scale = 1.0 + 5.0 * tf.nn.tanh(0.2 * lhuc_output)
+        tf.summary.histogram('{}_scale'.format(lhuc_tower_name), lhuc_scale)
+        cur_layer = cur_layer * lhuc_scale
+
+    cur_layer = modules.DenseTower(name='{}_layer_output'.format(name),
+                        output_dims=[nn_dims[-1]],
+                        initializers=nn_initializers[-1],
+                        activations=[nn_activations[-1]], # fatal
+                        )(cur_layer)
+    
+    return cur_layer
+'''
+
 
 def main():
     with tf.Graph().as_default():
         with tf.Session() as sess:
-            emb_slot1 = multihot_embedding(sess, 1)
-            #emb_slot2 = onehot_embedding(sess, 2)
-
-            """
-            emb_slot1 = multihot_embedding(sess, 1)
+            emb_slot1 = onehot_embedding(sess, 1)
             emb_slot2 = multihot_embedding(sess, 2)
-            t0, t1 = get_senet_weights(sess, [emb_slot1, emb_slot2])
-            sess.run(tf.global_variables_initializer())
-            print("emb_slot1=\n", sess.run(emb_slot1))
-            print("emb_slot2=\n", sess.run(emb_slot2))        
-            print("t0=\n", sess.run(t0))
-            print("t1=\n", sess.run(t1))
-            """
+
+
+            #SENet
+            x = tf.stack([emb_slot1, emb_slot2], axis=1)
+            senet_embed_matrix, f_weight = SENet(sess, x, 2, g_emb_size, 0.2)
+            print('senet_emb=\n', sess.run(senet_embed_matrix))
+            print('f_weight=\n', sess.run(f_weight))
+
+            #LHUC
+            
 
         #end-with
     #end-with
