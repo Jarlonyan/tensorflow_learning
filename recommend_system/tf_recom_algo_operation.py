@@ -42,9 +42,16 @@ def multihot_embedding(sess, slot_id):
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_emb))
     return slotx_emb
 
-#2. 用item_emb对multihot做加权求和的attention
-def attention_func(Q, K, V):
+#2. 用item_emb对multihot做加权求和的attention。用Q、K计算权重，对V重新赋值
+#Q: query( to match others)
+#K: key (to be mathed)
+#V: information to be extrated
+def attention_func(sess, Q, K, V):
     Z = tf.matmul(Q, K, transpose_b=True)
+    print("Q=\n", sess.run(Q))
+    print("K=\n", sess.run(K))
+    print("V=\n", sess.run(V))
+    print("Z=\n", sess.run(Z))
     dk = tf.cast(tf.shape(K)[-1], dtype=tf.float32)
     Z = tf.divide(Z, tf.sqrt(dk))
     Z = tf.nn.softmax(Z, dim=-1)
@@ -57,11 +64,15 @@ def multihot_attention_embedding(sess, slot_id, batch_ids, item_emb):
     sess.run(tf.global_variables_initializer())
     batch_emb = []
     item_emb_list = tf.split(item_emb, 3, axis=0) #item_emb是batch的，先拆分开来
+    print("item_emb=\n", sess.run(item_emb))
+    print("emb_table=\n", sess.run(slotx_emb_table))
     for (ids,Q) in zip(batch_ids, item_emb_list):
+        print("ids=", ids)
         ids = tf.constant(ids, dtype=tf.int64)
         V = tf.nn.embedding_lookup(slotx_emb_table, ids) #V.shape=m*d, m是这个样本的这个slot是m-hot，d是emb维度
-        res = attention_func(Q, V, V)      #Q.shape=1*d, d是emb维度
+        res = attention_func(sess, Q, V, V)      #Q.shape=1*d, d是emb维度
         batch_emb.append(res)
+        print('=====================================')
         #print("res=", sess.run(V))
     slotx_emb = tf.stack(batch_emb, axis=0)
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_emb))
@@ -88,7 +99,7 @@ def mlp(sess, mlp_input, mlp_dims):
     return x
 
 def LHUCNet(sess, lhuc_inputs, lhuc_dims, scale_last=False):
-    mlp_dims = [256, 256, 128, 64]
+    mlp_dims = [256, 256, 128, 2]
     cur_layer = lhuc_inputs
     for idx,dim in enumerate(mlp_dims[:-1]):
         lhuc_output = mlp(sess, lhuc_inputs, lhuc_dims+[int(cur_layer.shape[1])])
@@ -107,7 +118,7 @@ def main():
     with tf.Graph().as_default():
         with tf.Session() as sess:
             emb_slot1 = onehot_embedding(sess, 1)
-            emb_slot2 = multihot_embedding(sess, 2)
+            #emb_slot2 = multihot_embedding(sess, 2)
 
             batch_ids = [ #batch_size=3,每一行表示一个user_recent序列
                 [5,2,6,1],
@@ -116,21 +127,22 @@ def main():
             ]
             emb_slot3 = multihot_attention_embedding(sess, 3, batch_ids, emb_slot1)
 
-            #'''
+            '''
             #SENet
             x = tf.stack([emb_slot1, emb_slot2], axis=1)
             senet_emb_matrix, f_weight = SENet(sess, x, 2, g_emb_size, 0.2) #2表示有2个slot
             print('senet_emb=\n', sess.run(senet_emb_matrix))
             print('f_weight=\n', sess.run(f_weight))
-            #'''
+            '''
 
-            #'''
+            '''
             #LHUC
             lhuc_inputs = tf.concat([emb_slot1, emb_slot2], axis=1)
-            lhuc_dims = [256, 256, 128, 64]
+            lhuc_dims = [128, 128]
             lhuc_output = LHUCNet(sess, lhuc_inputs, lhuc_dims, False)
             print("lhuc_output=\n", sess.run(lhuc_output))
-            #'''
+            print("lhuc_output.shape=", lhuc_output.shape)
+            '''
 
 
         #end-with
