@@ -18,7 +18,7 @@ def onehot_embedding(sess, slot_id):
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_emb))
     return slotx_emb
 
-#2. multihot embedding方式
+#2. multihot embedding, sum pooling方式
 def multihot_embedding(sess, slot_id):
     slotx_emb_table = tf.get_variable(name='multi_hot_emb_slot_%s'%str(slot_id), shape=(g_dict_len, g_emb_size), initializer=tf.glorot_uniform_initializer())
     '''
@@ -42,7 +42,7 @@ def multihot_embedding(sess, slot_id):
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_emb))
     return slotx_emb
 
-#2. 用item_emb对multihot做加权求和的attention。用Q、K计算权重，对V重新赋值
+#3. multihot embedding with attention: 用item_emb对multihot做加权求和的attention。用Q、K计算权重，对V重新赋值
 #Q: query( to match others)
 #K: key (to be mathed)
 #V: information to be extrated
@@ -78,7 +78,7 @@ def multihot_attention_embedding(sess, slot_id, batch_ids, item_emb):
     print("emb(slot"+str(slot_id)+")=\n", sess.run(slotx_emb))
     return slotx_emb
 
-#3. SENet
+#4. SENet
 def SENet(sess, emb_matrix, field_size, emb_size, ratio):
     z = tf.reduce_mean(emb_matrix, axis=2)  # bs*field*emb_size  ->  bs*field
     z1 = tf.layers.dense(z, units=field_size/ratio, activation='relu')
@@ -88,7 +88,7 @@ def SENet(sess, emb_matrix, field_size, emb_size, ratio):
     senet_emb = tf.multiply(emb_matrix, tf.expand_dims(w, axis=-1))   #(bs*field*emb) * (bs*field*1)
     return senet_emb, w
 
-#4. LHUCNet
+#5. LHUCNet
 def mlp(sess, mlp_input, mlp_dims):
     x = mlp_input # bs*d
     if len(mlp_dims) > 1:
