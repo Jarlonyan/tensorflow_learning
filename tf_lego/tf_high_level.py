@@ -71,23 +71,16 @@ def auc_loss(sess):
     loss = tf.reduce_mean(tf.abs(labels_difference) * weighted_loss, 0) * 0.5
     loss = tf.reshape(loss, [-1])
     
-
-#2. tf.expand_dims，对tensor插入一个维度
-def tf_expand_dims(sess):
-    a = tf.constant([[1,2,3], [4,5,6]])
-    t1 = tf.expand_dims(a, 0)
-    t2 = tf.expand_dims(a, 1)
-    b = t1 - t2
-    print("t1=\n", sess.run(t1))
-    print("t2=\n", sess.run(t2))
-    print("b=\n", sess.run(b))
-    print(t1.shape)
-    print(t2.shape)
-    return
-    t3 = tf.expand_dims(a, 2)
-    t4 = tf.expand_dims(a, -1)
-    print(t3.shape)
-    print(t4.shape)
+def layer_norm(inputs, name=None):
+    """Apply layer normalization over last axis.
+    """
+    inputs_shape = inputs.get_shape()
+    params_shape = inputs_shape[-1:]
+    mean, variance = tf.nn.moments(inputs, [-1], keep_dims=True)
+    with tf.name_scope(name):
+        beta = M.get_variable(name=name+"_beta", shape=params_shape, initializer=initializers.Zeros())
+        gamma = M.get_variable(name=name+'_gamma', shape=params_shape, initializer=initializers.Ones())
+    return tf.nn.batch_normalization(inputs, mean, variance, beta, gamma, variance_epsilon=1e-6)
 
 
 def main():

@@ -64,6 +64,31 @@ def tf_split(sess):
     a = tf.Variable([[[[1],[1],[1]], [[2],[2],[2]]]])
     #b = tf.split(a, num_or_size_splits ,axis=0)
 
+#6. tf.expand_dims，对tensor插入一个维度
+def tf_expand_dims(sess):
+    a = tf.constant([[1,2,3], [4,5,6]])
+    t1 = tf.expand_dims(a, 0)
+    t2 = tf.expand_dims(a, 1)
+    b = t1 - t2
+    print("t1=\n", sess.run(t1))
+    print("t2=\n", sess.run(t2))
+    print("b=\n", sess.run(b))
+    print(t1.shape)
+    print(t2.shape)
+    return
+    t3 = tf.expand_dims(a, 2)
+    t4 = tf.expand_dims(a, -1)
+    print(t3.shape)
+    print(t4.shape)
+
+#7. tf.linag.diag_part
+def tf_diag_part(sess):
+    logits = tf.constant([[1,1,1], [2,2,2], [3,3,3], [4,4,4], [5,5,5], [6,6,6]])
+    sfx_prob = tf.linalg.diag_part(logits)
+    print("sfx_prob=\n", sess.run(sfx_prob))
+
+
+
 def main():
     with tf.Session() as sess:
         #tf_reshape(sess)

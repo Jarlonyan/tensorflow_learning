@@ -1,0 +1,8 @@
+*nohup.out
+*.swp
+.vscode
+.idea
+.idea/*
+tmp_log/*
+
+
