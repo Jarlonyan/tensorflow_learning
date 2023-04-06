@@ -32,7 +32,7 @@ def tf_multiply(sess):
 def tf_concat(sess):
     a = tf.constant([[1,2,3], [4,5,6]])
     b = tf.constant([[7,8,9], [10,11,12]])
-    t = tf.concat([a,b], 1)
+    t = tf.concat([a,b], axis=1)
     print("a=\n", sess.run(a))
     print("b=\n", sess.run(b))
     print("tf.concat([a,b],0)=\n", sess.run(t))
@@ -51,18 +51,13 @@ def tf_equal(sess):
     print("tf.equal(x, x.T)=\n", sess.run(tf.cast(z, dtype=tf.int32)))
 
 
-
 def main():
     with tf.Session() as sess:
-        #tf_slice(sess)
-        #tf_split(sess)
+        #tf_add_x(sess)
+        #tf_matmul(sess)
+        tf_multiply(sess)
         #tf_concat(sess)
-        #tf_transpose(sess)
-        #tf_stack(sess)
-        #tf_unstack(sess)
-        #tf_reverse(sess)
-        tf_gather(sess)
-        #tf_onehot(sess)
+        #tf_equal(sess)
 
 
 if __name__ == '__main__':
