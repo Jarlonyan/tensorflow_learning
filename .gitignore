@@ -1,5 +1,6 @@
 *nohup.out
 *.swp
+*.pyc
 .vscode
 .idea
 .idea/*
