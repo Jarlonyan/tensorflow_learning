@@ -11,22 +11,26 @@ def tf_diag_part(sess):
     sfx_prob = tf.linalg.diag_part(logits)
     print("sfx_prob=\n", sess.run(sfx_prob))
 
+#2. tf.matmul，矩阵乘法
 def tf_matmul(sess):
     u_emb = tf.constant([[2,2,2], [2,2,2]])  #bs x d
     g_emb = tf.constant([[3,3,3], [3,3,3]])  #bs x d
     logits = tf.matmul(u_emb, g_emb, transpose_b=True)
     print(logits.shape)
 
+#3. tf.multiply，元素相乘
 def tf_multiply(sess):
     a = tf.constant([[2,2,2], [2,2,2]])
     b = tf.constant([[3,3,3], [3,3,3]])
     c = tf.multiply(a, b)
     print("c=\n", sess.run(c))
 
+#4. tf.eye，单位矩阵
 def tf_eye(sess):
     a = tf.eye(5, 5, dtype=tf.int32)
     print("tf.eye=\n", sess.run(a))
 
+#5. tf.nn.softmax_cross_entropy_with_logits, softmax损失函数
 def tf_softmax_loss(sess):
     labels = [[0,0,1], [0,1,0]]  #one-hot
     logits = [[2,0.5,6], [0.1,0,3]]
@@ -34,7 +38,7 @@ def tf_softmax_loss(sess):
     res1 = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
     print("res1.shape=", res1.shape)
 
-#tf.equal: 对比这两个tensor相等的元素，相等则返回True，否则返回False
+#6. tf.equal，对比这两个tensor相等的元素，相等则返回True，否则返回False
 def tf_equal(sess):
     #普通用法
     a = tf.constant([[3,3,4,1,2,2]])
@@ -48,6 +52,15 @@ def tf_equal(sess):
     print("x=\n", sess.run(x))
     print("tf.equal(x, x.T)=\n", sess.run(tf.cast(z, dtype=tf.int32)))
 
+#7. tf.add, tf.add_n
+def tf_add_x(sess):
+    a = tf.constant([2,2,2,2])
+    b = tf.constant([3,3,3,3])
+    c = tf.add_n([a, b]) #实现列表的元素的相加，列表中可以是张量
+    d = tf.add(a,b)  #张量相加
+    print("c=\n", sess.run(c))
+    print("d=\n", sess.run(d))
+
 def main():
     with tf.Session() as sess:
         #tf_diag_part(sess)
@@ -55,7 +68,8 @@ def main():
         #tf_multiply(sess)
         #tf_eye(sess)
         #tf_softmax_loss(sess)
-        tf_equal(sess)
+        #tf_equal(sess)
+        tf_add_x(sess)
 
 if __name__ == '__main__':
     main()
