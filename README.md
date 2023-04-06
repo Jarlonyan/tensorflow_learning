@@ -18,7 +18,6 @@ sudo pip install keras=2.2.0
 + `deep_fm`
     https://github.com/yongqyu/DeepFM-tf2
 
-
 + DIN
     https://github.com/zhougr1993/DeepInterestNetwork
 
