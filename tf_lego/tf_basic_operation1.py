@@ -138,6 +138,14 @@ def tf_eye(sess):
     a = tf.eye(5, 5, dtype=tf.int32)
     print("tf.eye=\n", sess.run(a))
 
+#15. tf.convert_to_tensor
+def tf_convert_to_tensor(sess):
+    ts = tf.convert_to_tensor(slot_embeddings)
+
+#16. tf.identity: 返回一个和输入相同形状和内容的Tensor；会添加节点到graph中
+def tf_identity(sess):
+    tf.identity()
+
 def main():
     with tf.Session() as sess:
         #tf_reshape(sess)
