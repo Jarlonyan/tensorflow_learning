@@ -1,6 +1,6 @@
 #coding=utf-8
 '''
-实现线性回归模型
+3-1: 实现线性回归模型
 '''
 import tensorflow as tf
 import numpy as np
