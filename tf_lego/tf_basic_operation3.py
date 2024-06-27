@@ -55,15 +55,36 @@ def tf_equal(sess):
 def tf_clip(sess):
     t_clipped = tf.clip_by_value(t, 0.0, 1.0)
 
+
+STAY_BUCKET_NUM = 10
+def generate_bucket_method(method='exp_bin'):
+    if method == 'exp_bin':
+        return tf.constant([np.exp(x/40.0) - 1 for x in range(STAY_BUCKET_NUM)])
+    elif method == 'uniform':
+        return tf.range(0.0, 1800.0, 1.0)
+    elif method == 'segment':
+        return np.concatenate(
+                [
+                    np.arange(0, 30, 0.2),
+                    np.arange(30, 100, 1.0),
+                    np.arange(100, 400, 10.0),
+                    np.arange(400, 1820, 20.0),
+                ], axis=0
+                )
+    else:
+        return tf.constant([np.exp(x/40.0) - 1 for x in range(STAY_BUCKET_NUM)])
+
 def main():
     with tf.Session() as sess:
         #tf_add_x(sess)
         #tf_matmul(sess)
-        tf_multiply(sess)
+        #tf_multiply(sess)
         #tf_concat(sess)
         #tf_equal(sess)
-
-
+        test = generate_bucket_method('uniform')
+        print(sess.run(test))
+        print(test)
+    
 if __name__ == '__main__':
     main()
 

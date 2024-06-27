@@ -146,10 +146,34 @@ def tf_convert_to_tensor(sess):
 def tf_identity(sess):
     tf.identity()
 
+def tf_softmax(sess):
+    x = tf.constant([[0.5, 0.3, 0.8, 0.4, 0.2]])
+    y = tf.nn.softmax(x, axis=1)
+    print('tf_softmax=', sess.run(y))
+
+def generate_bucket_method(method='exp_bin'):
+    STAY_BUCKET_NUM = 10
+    if method == 'exp_bin':
+        print('debug_info, step1: ',[x - 1 for x in range(STAY_BUCKET_NUM)])
+        return tf.constant([np.exp(x/40.0) - 1 for x in range(STAY_BUCKET_NUM)])
+    elif method == 'uniform':
+        return tf.range(0.0, 1800.0, 1.0, dtype=M.get_dtype())
+    elif method == 'segment':
+        return np.concatenate(
+                [
+                    np.arange(0, 30, 0.2),
+                    np.arange(30, 100, 1.0),
+                    np.arange(100, 400, 10.0),
+                    np.arange(400, 1820, 20.0),
+                ], axis=0
+                )
+    else:
+        return tf.constant([np.exp(x/40.0) - 1 for x in range(STAY_BUCKET_NUM)])
+
 def main():
     with tf.Session() as sess:
         #tf_reshape(sess)
-        tf_expand_dims(sess)
+        #tf_expand_dims(sess)
         #tf_squeeze(sess)
         #tf_tile(sess)
         ##tf_split(sess)
@@ -162,6 +186,9 @@ def main():
         #tf_softmax_loss(sess)
         #tf_diag_part(sess)
         #tf_eye(sess)
+        #tf_softmax(sess)
+        x = generate_bucket_method()
+        print('xxx=', sess.run(x))
 
 if __name__ == '__main__':
     main()
