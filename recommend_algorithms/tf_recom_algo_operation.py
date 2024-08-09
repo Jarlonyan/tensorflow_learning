@@ -103,8 +103,8 @@ def LHUCNet(sess, lhuc_inputs, lhuc_dims, scale_last=False):
     cur_layer = mlp(sess, cur_layer, [mlp_dims[-1]])
     return cur_layer
 
-#6. NAS
-def alloc_emb_for_nas(slots=[], target_vec_sizes=[0,1,2,4], temp=1.0):
+#6. NAS-----------------------------------------------------------------------------------------
+def alloc_emb_for_nas_v1(slots=[], target_vec_sizes=[0,1,2,4], temp=0.2):
     print("total slots for nas",len(slots),"target vec size for search",target_vec_sizes,"temperature",temp)
     max_size= max(target_vec_sizes)
     masks =[]
@@ -137,6 +137,67 @@ def alloc_emb_for_nas(slots=[], target_vec_sizes=[0,1,2,4], temp=1.0):
     print("flatten output_embs=", tf.keras.layers.Flatten()(output_embs))
     return tf.keras.layers.Flatten()(output_embs), logits
 
+def alloc_emb_for_nas_v2(slots, emb_sizes=[0,1,2,3,4], T=0.2):
+    print ("total slots for nas", len(slots))
+    print ("target vec size for search", emb_sizes)
+    print ("Temperature", T)
+    # embeds
+    emb_size = max(emb_sizes)
+    if emb_sizes[0] != 0:
+        emb_sizes.insert(0,0)
+    embeds = [ b_norm(self.new_embedding(slot, emb_size)) for slot in slots ]
+    embeds = tf.stack(embeds, axis=1, name="original_embeds")
+    # embeds
+    # mask
+    masks = [[np.zeros(emb_size)]]
+    for i in range(1,len(emb_sizes)):
+        mask = np.zeros(emb_size)
+        mask[emb_sizes[i-1]:emb_sizes[i]] = 1.0
+        masks.append([mask])
+    masks = np.concatenate(masks, axis=0)
+    print(masks)
+    mask_matrix = tf.constant(masks, name="masks", dtype=tf.float32)
+    # (bs, slots, emb_size)
+    logits = M.get_variable(name="nas_choice_logits",
+                            shape=(int(embeds.shape[1]), len(emb_sizes)),
+                            initializer=initializers.Zeros())
+    choice_probs = tf.nn.softmax(logits / T, axis=1, name="nas_choice_prob")
+    tf.summary.histogram("nas_choice_probs", choice_probs)
+    # (slots, emb_size)
+    choice_matrix = tf.matmul(choice_probs, mask_matrix, name="choice_matrix")
+    # mask
+    print ("choice_matrix.shape", choice_matrix.shape)
+    print ("embeds.shape", embeds.shape)
+    # (bs, slots, emb_size)
+    output_embs = tf.expand_dims(choice_matrix, axis=0) * embeds
+    # 加速小概率的归0
+    alpha = 0.3
+    threshold = 1.0 / len(emb_sizes) * alpha  # 均值* alpha，小于这个值的加速变0 --> [0.06]
+    print("threshold=", threshold)
+    need_boost = tf.where(choice_probs < threshold, tf.ones_like(choice_probs), tf.zeros_like(choice_probs))
+    boost_sum = tf.reduce_sum(need_boost)
+    boost_sum= tf.Print(boost_sum, [ boost_sum, boost_sum / (len(slots)* len(emb_sizes)) ], message="nas_need_boost_op_sum_and_ratio")
+    tf.summary.scalar("loss_stat/need_boost_ops_sum", boost_sum)
+    tf.summary.scalar("loss_stat/need_boost_ops_ratio", boost_sum/ (len(slots)* len(emb_sizes)))
+    boost_loss = tf.reduce_sum(need_boost * choice_probs) # 都是正数，加起来就行
+    # 0 op不能处于舒适区
+    comfort_min, comfort_max = 0.6, 0.8
+    zeros_probs = choice_probs[:, :1] # 默认第0位为0 op
+    zero_in_comfort_zone = tf.cast(tf.logical_and(zeros_probs>comfort_min, zeros_probs<comfort_max), dtype=tf.float32)
+    zero_in_comfort_zone_sum = tf.reduce_sum(zero_in_comfort_zone)
+    zero_in_comfort_zone_sum = tf.Print(zero_in_comfort_zone_sum,
+                                        [zero_in_comfort_zone_sum, zero_in_comfort_zone_sum/len(slots)], message="nas_zero_in_comfort_zone_sum_and_ratio")
+    bigger_than_comfort_max = tf.cast(zeros_probs>comfort_max, dtype=tf.float32)
+    bigger_than_comfort_max_sum = tf.reduce_sum(bigger_than_comfort_max)
+    tf.summary.scalar("loss_stat/zero_in_comfort_zone_sum", zero_in_comfort_zone_sum)
+    tf.summary.scalar("loss_stat/zero_in_comfort_zone_sum_ratio", zero_in_comfort_zone_sum/len(slots))
+    tf.summary.scalar("loss_stat/bigger_than_comfort_zone_sum", bigger_than_comfort_max_sum)
+    tf.summary.scalar("loss_stat/bigger_than_comfort_zone_sum_ratio", bigger_than_comfort_max_sum/len(slots))
+    comfort_zone_loss = tf.reduce_sum(1.0 - zero_in_comfort_zone * zeros_probs)
+    return tf.layers.flatten(output_embs), logits, {'boost_loss':boost_loss, 'comfort_loss':comfort_zone_loss}
+    
+
+#---------------------------------------------------------------------------------------------------
 
 def main():
     #emb_slot1 = onehot_embedding(slot_id=1, emb_size=4)
@@ -164,7 +225,8 @@ def main():
     #print("lhuc_output.shape=", lhuc_output.shape)
 
     #NAS
-    alloc_emb_for_nas(slots=[1,2])
+    #alloc_emb_for_nas_v1(slots=[1,2])
+    alloc_emb_for_nas_v2(slots=[1,2])
 
 
 if __name__ == '__main__':
