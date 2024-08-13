@@ -68,44 +68,44 @@ def multihot_attention_embedding(slot_id, batch_ids, item_emb, emb_size):
     return slotx_emb
 
 #4. SENet
-def SENet(sess, emb_matrix, field_size, emb_size, ratio):
+def SENet(emb_matrix, field_size, emb_size, ratio):
     z = tf.reduce_mean(emb_matrix, axis=2)  # bs*field*emb_size  ->  bs*field
     z1 = tf.layers.dense(z, units=field_size/ratio, activation='relu')
     w = tf.layers.dense(z1, units=field_size, activation='relu')  #bs*field
-    sess.run(tf.global_variables_initializer()) #使用过tf.layers.dense的后面，要初始化
+    #sess.run(tf.global_variables_initializer()) #使用过tf.layers.dense的后面，要初始化
     #print("debug_senet, z.shape=", z.shape, ", z1.shape=", z1.shape, ", a.shape=", a.shape)
     senet_emb = tf.multiply(emb_matrix, tf.expand_dims(w, axis=-1))   #(bs*field*emb) * (bs*field*1)
     return senet_emb, w
 
 #5. LHUCNet
-def mlp(sess, mlp_input, mlp_dims):
+def mlp(mlp_input, mlp_dims):
     x = mlp_input # bs*d
     if len(mlp_dims) > 1:
         for idx,dim in enumerate(mlp_dims[0:-1]):
-            x = tf.layers.dense(x, units=dim, activation='relu')
-    x = tf.layers.dense(x, units=mlp_dims[-1], activation=None)
-    sess.run(tf.global_variables_initializer())
+            x = tf.keras.layers.Dense(units=dim, activation='relu')(x)
+    x = tf.keras.layers.Dense(units=mlp_dims[-1], activation=None)(x)
+    #sess.run(tf.global_variables_initializer())
     return x
 
-def LHUCNet(sess, lhuc_inputs, lhuc_dims, scale_last=False):
+def LHUCNet(lhuc_inputs, lhuc_dims, scale_last=False):
     mlp_dims = [256, 256, 128, 2]
     cur_layer = lhuc_inputs
     for idx,dim in enumerate(mlp_dims[:-1]):
-        lhuc_output = mlp(sess, lhuc_inputs, lhuc_dims+[int(cur_layer.shape[1])])
+        lhuc_output = mlp(lhuc_inputs, lhuc_dims+[int(cur_layer.shape[1])])
         lhuc_scale = 1.000 + 5.000 * tf.nn.tanh(0.200 * lhuc_output)
-        cur_layer = mlp(sess, cur_layer*lhuc_scale, [dim])
+        cur_layer = mlp(cur_layer*lhuc_scale, [dim])
 
     if scale_last:
         lhuc_output = mlp(lhuc_inputs, lhuc_dims+[mlp_dims[-1]])
         lhuc_scale = 1.000 + 5.000 * tf.nn.tanh(0.200 * lhuc_output)
         cur_layer = cur_layer * lhuc_scale
 
-    cur_layer = mlp(sess, cur_layer, [mlp_dims[-1]])
+    cur_layer = mlp(cur_layer, [mlp_dims[-1]])
     return cur_layer
 
 #6. NAS-----------------------------------------------------------------------------------------
-def alloc_emb_for_nas_v1(slots=[], target_vec_sizes=[0,1,2,4], temp=0.2):
-    print("total slots for nas",len(slots),"target vec size for search",target_vec_sizes,"temperature",temp)
+def alloc_emb_for_nas_v1(slots=[], target_vec_sizes=[0,1,2,4], T=0.2):
+    print("total slots for nas",len(slots),"target vec size for search",target_vec_sizes,"temperature", T)
     max_size= max(target_vec_sizes)
     masks =[]
     for i,mask_size in enumerate(target_vec_sizes):  #主要变化了6-9行
@@ -129,7 +129,7 @@ def alloc_emb_for_nas_v1(slots=[], target_vec_sizes=[0,1,2,4], temp=0.2):
         embeddings.append(emb)
     embeddings = tf.stack(embeddings,axis=1,name="original_embeds") # BN * slots * emb
     logits = tf.Variable(tf.zeros((len(slots),len(target_vec_sizes))), name="nas_choice_logits")
-    choice_probs = tf.nn.softmax(logits/temp,axis=1,name="nas_choice_prob") # slots * 3
+    choice_probs = tf.nn.softmax(logits/T, axis=1,name="nas_choice_prob") # slots * 3
     tf.summary.histogram("nas_choice_probs",choice_probs)
     choice_matrix = tf.matmul(choice_probs,total_mask,name="choice_probs") # slots* emb
     output_embs = tf.expand_dims(choice_matrix,axis=0) * embeddings
@@ -195,7 +195,17 @@ def alloc_emb_for_nas_v2(slots, emb_sizes=[0,1,2,3,4], T=0.2):
     tf.summary.scalar("loss_stat/bigger_than_comfort_zone_sum_ratio", bigger_than_comfort_max_sum/len(slots))
     comfort_zone_loss = tf.reduce_sum(1.0 - zero_in_comfort_zone * zeros_probs)
     return tf.layers.flatten(output_embs), logits, {'boost_loss':boost_loss, 'comfort_loss':comfort_zone_loss}
-    
+
+def nas_model_two_stage(stage=0):
+    if stage == 0:
+        nas_emb, _ = alloc_emb_for_nas_v1(slots=[1, 3, 8])
+        bias_input = tf.Variable(tf.random.normal([3,1], stddev=0.35), name="bias_input")
+        concat_input = tf.concat([nas_emb, bias_input], axis=1, name="concat_input")
+    elif stage == 1:
+        nas_emb = xxxx
+        bias_input = tf.Variable(tf.random.normal([3,1], stddev=0.35), name="bias_input")
+        concat_input = tf.concat([nas_emb, bias_input], axis=1, name="concat_input")
+    mlp(concat_input, [32, 16, 8, 1])
 
 #---------------------------------------------------------------------------------------------------
 
@@ -225,8 +235,7 @@ def main():
     #print("lhuc_output.shape=", lhuc_output.shape)
 
     #NAS
-    #alloc_emb_for_nas_v1(slots=[1,2])
-    alloc_emb_for_nas_v2(slots=[1,2])
+    nas_model_two_stage(stage=0)
 
 
 if __name__ == '__main__':
