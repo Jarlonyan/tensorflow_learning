@@ -2,7 +2,7 @@
 import numpy as np
 import tensorflow as tf
 
-g_dict_len = 10
+g_dict_len = 60
 
 #1. 简单的onehot embedding方式
 def onehot_embedding(slot_id, emb_size=4):
@@ -104,7 +104,7 @@ def LHUCNet(lhuc_inputs, lhuc_dims, scale_last=False):
     return cur_layer
 
 #6. NAS-----------------------------------------------------------------------------------------
-def alloc_emb_for_nas_v1(slots=[], target_vec_sizes=[0,1,2,4], T=0.2):
+def alloc_emb_for_nas_search_v1(slots=[], target_vec_sizes=[0,1,2,4], T=0.2):
     print("total slots for nas",len(slots),"target vec size for search",target_vec_sizes,"temperature", T)
     max_size= max(target_vec_sizes)
     masks =[]
@@ -137,7 +137,7 @@ def alloc_emb_for_nas_v1(slots=[], target_vec_sizes=[0,1,2,4], T=0.2):
     print("flatten output_embs=", tf.keras.layers.Flatten()(output_embs))
     return tf.keras.layers.Flatten()(output_embs), logits
 
-def alloc_emb_for_nas_v2(slots, emb_sizes=[0,1,2,3,4], T=0.2):
+def alloc_emb_for_nas_search_v2(slots, emb_sizes=[0,1,2,3,4], T=0.2):
     print ("total slots for nas", len(slots))
     print ("target vec size for search", emb_sizes)
     print ("Temperature", T)
@@ -196,15 +196,23 @@ def alloc_emb_for_nas_v2(slots, emb_sizes=[0,1,2,3,4], T=0.2):
     comfort_zone_loss = tf.reduce_sum(1.0 - zero_in_comfort_zone * zeros_probs)
     return tf.layers.flatten(output_embs), logits, {'boost_loss':boost_loss, 'comfort_loss':comfort_zone_loss}
 
+def alloc_emb_from_nas_stage0():
+    NN_SLOT_VEC = [ #NN_SLOT_VEC就是nas stage0搜索得到的slot_id,dim对
+                (1, 4), (2, 4), (3, 2), (4, 2), (5, 4),
+                (8, 4), (9, 2), (10, 2), (11, 2)]
+    common_embedding = [onehot_embedding(slot, dim) for slot, dim in NN_SLOT_VEC]
+    concat_embedding = tf.concat(common_embedding, axis=1)
+    return concat_embedding
+
 def nas_model_two_stage(stage=0):
     if stage == 0:
-        nas_emb, _ = alloc_emb_for_nas_v1(slots=[1, 3, 8])
-        bias_input = tf.Variable(tf.random.normal([3,1], stddev=0.35), name="bias_input")
-        concat_input = tf.concat([nas_emb, bias_input], axis=1, name="concat_input")
+        nas_emb, _ = alloc_emb_for_nas_search_v1(slots=[1, 2, 3, 4, 5, 8, 9, 10, 11])
     elif stage == 1:
-        nas_emb = xxxx
-        bias_input = tf.Variable(tf.random.normal([3,1], stddev=0.35), name="bias_input")
-        concat_input = tf.concat([nas_emb, bias_input], axis=1, name="concat_input")
+        nas_emb = alloc_emb_from_nas_stage0() #根据NAS stage0的预训练结果来分配embedding
+
+    bias_input = tf.Variable(tf.random.normal([3,1], stddev=0.35), name="bias_input")
+    concat_input = tf.concat([nas_emb, bias_input], axis=1, name="concat_input")
+    print('concat_input=', concat_input)
     mlp(concat_input, [32, 16, 8, 1])
 
 #---------------------------------------------------------------------------------------------------
@@ -235,7 +243,8 @@ def main():
     #print("lhuc_output.shape=", lhuc_output.shape)
 
     #NAS
-    nas_model_two_stage(stage=0)
+    #nas_model_two_stage(stage=0)
+    nas_model_two_stage(stage=1)
 
 
 if __name__ == '__main__':
